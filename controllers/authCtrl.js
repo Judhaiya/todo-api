@@ -1,29 +1,38 @@
- const users = require("../models/UserModel")
+ 
+const UsersData = require("../models/UserModel")
  const jwt = require("jsonwebtoken")
- require(dotenv).config()
+
  // validation email
  const emailValidation = () => {
     const emailRegex = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/, "gm");
     return emailRegex.test(emailValidation)
 }
-exports.signup = async(req)=>{
+exports.signup = async(req,res)=>{
   const email = req?.body?.email;
   const userName = req?.body?.userName;
   const password = req?.body?.password
-
-  const findEmail =users.findOne({email : req?.body?.email}) 
-  if (findEmail){
-      res.status(400).json("User name already exists")
+  console.log(userName,"userName")
+// console.log(findEmail,"find e") 
+const emailRegex = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/, "gm");
+  try {
+    const findEmail = await UsersData.findOne({email })
+    if (findEmail){
+      res.status(400).json("User email already exists")
+  } else{
+    console.log("no correlating email found")
   }
-  else if (!emailValidation(email)){
-    res.status(400).json("Please enter a valid email")
+  }catch(err){
+    console.log(err,"error")
   }
-  else if (password.length > 6){
+   if (!emailRegex.test(email)){
+     res.status(400).json("Please enter a valid email")
+  }
+    if (password.length > 6){
     res.status(400).json("password length should not be less than 6")
   }
   else {
     try {
-    const newUser =  new User({
+    const newUser =  new UsersData({
         email,
         userName,
         password
