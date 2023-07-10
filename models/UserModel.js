@@ -28,9 +28,11 @@ userSchema.pre('save',async function(next){
     console.log(err)
    })
    .then(hashedPassword=>{
-    userSchema.password = hashedPassword
     console.log(hashedPassword,"hp")
-    next()
+    user.password = hashedPassword
+    console.log(user,"password")
+   
+    return next(null,user)
    })
    .catch(err=>{
     console.log(err)
