@@ -100,6 +100,20 @@ describe("sign-api-test-cases", () => {
                     done()
                 })
         })
+        it("negative cases - should return 400 when email format is wrong",(done)=>{
+             let userDetails = {
+                email:"udhaiya",
+                password:456789
+             }
+             chai.request('http://localhost:8080')
+             .post('/api/auth/signup')
+             .send(userDetails)
+             .end((err, res) => {
+                 expect(400);
+                 res.body.should.have.property('msg').eql('Please enter a valid email');
+                 done()
+             })
+        })
     })
 })
 

@@ -26,13 +26,13 @@ const emailRegex = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+
     console.log(err,"error")
   }
    if (!emailRegex.test(email)){
-     res.status(400).json("Please enter a valid email")
+     res.status(400).json({msg : "Please enter a valid email"})
   }
     if (password.length > 6){
-    res.status(400).json("password length should not be greater than 6")
+    res.status(400).json({msg : "password length should not be greater than 6"})
   }
   if (password.length < 6){
-    res.status(400).json("password length should not be less than 6")
+    res.status(400).json({msg : "password length should not be less than 6"})
   }
   else {
     try {
