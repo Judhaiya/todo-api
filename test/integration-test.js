@@ -36,25 +36,28 @@ let userDetails = {
 }
 describe('sign api prep', () => {
     let token
+    const findEmail = UsersData.findOne({ email: userDetails.email })
     before(() => {
-        chai.request(`${process.env.SERVER_URL}`)
-            .delete('api/signup')
-            .send(userDetails)
-            .end((err, res) => {
-                expect(err).to.be(undefined)
-                expect(200)
-                token = res.body.token
-            })
+        if (findEmail) {
+            chai.request(`${process.env.SERVER_URL}`)
+                .delete('api/auth/delete')
+                .send(userDetails)
+                .end((err, res) => {
+                    expect(err).to.be(undefined)
+                    expect(res.statusCode).to.equal(200)
+                    return token = res.body.token
+                })
+        }
     })
 
     describe('when signup is called', () => {
         it('does the api process registration correctly', async (done) => {
-            const findEmail = UsersData.findOne({ email: userDetails.email })
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .post('/api/auth/signup')
                 .send(userDetails)
                 .end(async (err, res) => {
-                    expect(200)
+                    expect(err).to.be(undefined)
+                    expect(res.statusCode).to.equal(200)
                     res.body.should.have.property('msg')
                     expect(res.body.msg).to.be.eql('user details has been successfully stored in db')
                     if (findEmail) {
@@ -70,7 +73,7 @@ describe('sign api prep', () => {
         })
         it('does it should throw 400 if password has more than 6 characters in length'
             , (done) => {
-                chai.request('http://localhost:8080')
+                chai.request(process.env.SERVER_URI)
                     .post('/api/auth/signup')
                     .send({ ...userDetails, password: 123457890 })
                     .end((err, res) => {
@@ -81,7 +84,7 @@ describe('sign api prep', () => {
                     })
             })
         it('does it should if password has less than 6 characters in length', (done) => {
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .post('/api/auth/signup')
                 .send({ ...userDetails, password: 1234 })
                 .end((err, res) => {
@@ -92,7 +95,7 @@ describe('sign api prep', () => {
                 })
         })
         it('negative cases - show 400 error when no userName', (done) => {
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .post('/api/auth/signup')
                 .send({ email: userDetails.email, password: userDetails.password })
                 .end((err, res) => {
@@ -102,7 +105,7 @@ describe('sign api prep', () => {
                 })
         })
         it('negative cases - show 400 error when no email', (done) => {
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .post('/api/auth/signup')
                 .send({ userName: userDetails.userName, password: userDetails.password })
                 .end((err, res) => {
@@ -113,7 +116,7 @@ describe('sign api prep', () => {
                 })
         })
         it('negative cases - should return 400 when email format is wrong', (done) => {
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .post('/api/auth/signup')
                 .send({ ...userDetails, email: 'udhaiya' })
                 .end((err, res) => {
@@ -130,13 +133,15 @@ describe('sign api prep', () => {
 describe('login-test-cases', () => {
     describe('when login is called', () => {
         before(() => {
-            request(`${process.env.SERVER_URL}`)
-                .post('api/signup')
+            request(process.env.SERVER_URL)
+                .post('api/auth/signup')
                 .send(userDetails)
                 .end((err, res) => {
                     token = res.body.token
-                    expect(res.statusCode).to.equal(200).or.to.equal(400)
-                    expect(res.body.should.have.property('msg').eql('Please enter a valid email'))
+                    expect(res.statusCode).to.be.oneOf([200, 400])
+                    expect(res.body.should.have.property('msg').to.be.oneOf(["user details has been successfully stored in db"
+                        , "User email already exists"
+                    ]))
                     expect(err).to.be(undefined)
                 })
         })
@@ -144,8 +149,7 @@ describe('login-test-cases', () => {
          respond with 200 if it is present`, async (done) => {
             const findEmail = UsersData.findOne({ email: userDetails.email })
             expect(findEmail?.email).to.equal(userDetails?.email)
-            done()
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .post('/api/auth/login')
                 .send(userDetails)
                 .end((err, res) => {
@@ -153,9 +157,10 @@ describe('login-test-cases', () => {
                     expect(res.body.should.have.property('msg').eql('User has been successfully logged in'))
                     expect(res.statusCode).to.equal(200)
                 })
+            done()
         })
         it('it should throw 400 if email is not provided', (done) => {
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .post('/api/auth/login')
                 .send({ userName: userDetails.userName, password: userDetails.password })
                 .end((err, res) => {
@@ -165,7 +170,7 @@ describe('login-test-cases', () => {
                 })
         })
         it('it should throw 400 if password is not provided', (done) => {
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .post('/api/auth/login')
                 .send({ userName: userDetails.userName, email: userDetails.email })
                 .end((err, res) => {
@@ -187,17 +192,21 @@ describe('when delete operation is executed', () => {
     describe(`it should`, () => {
         let token
         before(() => {
-            request(`${process.env.SERVER_URL}`)
-                .post('api/signup')
+            request(process.env.SERVER_URL)
+                .post('api/auth/signup')
                 .send(userDetails)
                 .end((err, res) => {
                     token = res.body.token
-                    expect(res.statusCode).to.equal(200).or.to.equal(400)
+                    expect(res.statusCode).to.be.oneOf([200, 400])
+                    expect(res.body.should.have.property('msg').
+                        to.be.oneOf(["user details has been successfully stored in db"
+                            , "User email already exists"
+                        ]))
                 })
         })
         it('respond with status code 200 when email password,token is passed',
             (done) => {
-                chai.request('http://localhost:8080')
+                chai.request(process.env.SERVER_URI)
                     .delete('api/auth/delete')
                     .send({
                         email: userDetails.email,
@@ -214,7 +223,7 @@ describe('when delete operation is executed', () => {
                 done()
             })
         it('respond with status code 400 when password is not passed', (done) => {
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .delete('api/auth/delete')
                 .send({ email: userDetails.email, token: token })
                 .end((err, res) => {
@@ -225,7 +234,7 @@ describe('when delete operation is executed', () => {
             done()
         })
         it('respond with status code 400 when email is not passed', (done) => {
-            chai.request('http://localhost:8080')
+            chai.request(process.env.SERVER_URI)
                 .delete('api/auth/delete')
                 .send({
                     token,
@@ -243,7 +252,7 @@ describe('when delete operation is executed', () => {
 describe('delete api should throw error', () => {
     it('with status code 400 when token is not passed', (done) => {
 
-        chai.request('http://localhost:8080')
+        chai.request(process.env.SERVER_URI)
             .delete('api/auth/delete')
             .send({ email: userDetails.email, password: userDetails.password })
             .end((err, res) => {
