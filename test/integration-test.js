@@ -4,6 +4,7 @@ const dotenv = require("dotenv")
 const chaiHttp = require("chai-http")
 const UsersData = require("../models/UserModel")
 const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
 
 dotenv.config()
 chai.use(chaiHttp)
@@ -18,6 +19,8 @@ const should = chai.should()
 // 6. password should be  equal to characters in length
 // 7. hashed password and password is same
 //8. check if username already exists in db
+//9.comparing password
+//10.jwt verification
 
 // login
 // 1. email is not undefined
@@ -27,6 +30,7 @@ const should = chai.should()
 
 // describe("sign-api-test-cases", () => {
 before(() => {
+    let token;
     let userDetails = {
         userName: "Flynn",
         email: "BrandonFlynn12@gmail.com",
@@ -35,129 +39,139 @@ before(() => {
     request(`${process.env.SERVER_URL}`)
         .delete('api/signup')
         .send(userDetails)
-        .end((err, res) => {
+        .end(async (err, res) => {
             expect(200)
+            token = res.body.token
         })
 })
-//     describe("first-test-case", () => {
-//         it("whether the api is successfully fetching response", (done) => {
-//             let userDetails = {
-//                 userName: "Flynn",
-//                 email: "BrandonFlynn12@gmail.com",
-//                 password: "gemininerd"
-//             }
-//             chai.request('http://localhost:8080')
-//                 .post('/api/auth/signup')
-//                 .send(userDetails)
-//                 .end((err, res) => {
-//                     expect(200);
-//                     // res.body.should.have.property('msg')
-//                     // expect(res.body.msg).to.be.eql("user details has been successfully stored in db");
-//                     done()
-//                 })
-//         })
-it("if user already has an account in db ", async (done) => {
-    let userDetails = {
-        userName: "Flynn",
-        email: "BrandonFlynn12@gmail.com",
-        password: "gemininerd"
-    }
-    let findEmail = UsersData.findOne({ email: userDetails[email] })
-    if (findEmail) {
-        expect(400)
-        expect(res.body.msg).to.equal("User email already exists")
-        expect(res.body.token).to.exist
-    }
-    done()
+describe("first-test-case", () => {
+    it("whether the api is successfully fetching response", (done) => {
+        let userDetails = {
+            userName: "Flynn",
+            email: "BrandonFlynn12@gmail.com",
+            password: "gemininerd"
+        }
+        chai.request('http://localhost:8080')
+            .post('/api/auth/signup')
+            .send(userDetails)
+            .end((err, res) => {
+                expect(200);
+                res.body.should.have.property('msg')
+                expect(res.body.msg).to.be.eql("user details has been successfully stored in db");
+                done()
+            })
+    })
+    it("if user already has an account in db ", async function (done) {
+        let userDetails = {
+            userName: "Flynn",
+            email: "BrandonFlynn12@gmail.com",
+            password: "gemininerd"
+        }
+        let findEmail = UsersData.findOne({ email: userDetails[email] })
+        if (findEmail) {
+            expect(userDetails).to.deep.equal(findEmail)
+        }
+        done()
+    })
+    it("validate jwt",  function (done) {
+        let userDetails = {
+            userName: "Flynn",
+            email: "BrandonFlynn12@gmail.com",
+            password: "gemininerd"
+        }
+         jwt.verify(token, process.env.JWT_SECRET).then(jwtDetails=>{
+            return  expect(userDetails).to.deep.equal(jwtDetails)
+         })
+      
+        done()
+    })
+    it("compare user entered password and hashed password", async (done) => {
+        let userDetails = {
+            userName: "Flynn",
+            email: "BrandonFlynn12@gmail.com",
+            password: "gemininerd"
+        }
+        let findEmail = UsersData.findOne({ email: userDetails[email] })
+        const isPasswordMatched = await bcrypt.compare(userDetails?.password, findEmail?.password)
+        expect(isPasswordMatched).to.not.be(false)
+        done()
+    })
+    it("negative cases - it should throw 400 if password has more than 6 characters in length"
+        , (done) => {
+            let userDetails = {
+                userName: "Flynn",
+                email: "gemininerd11@gmail.com",
+                password: 123457890
+            }
+            chai.request('http://localhost:8080')
+                .post('/api/auth/signup')
+                .send(userDetails)
+                .end((err, res) => {
+                    expect(400);
+
+                    done()
+                })
+        })
+    it("negative cases - it should if password has less than 6 characters in length", (done) => {
+        let userDetails = {
+            userName: "Flynn",
+            email: "flora@gmail.com",
+            password: 1234
+        }
+        chai.request('http://localhost:8080')
+            .post('/api/auth/signup')
+            .send(userDetails)
+            .end((err, res) => {
+                expect(400);
+
+                done()
+            })
+    })
+    it("negative cases - show 400 error when no userName", (done) => {
+        let userDetails = {
+            email: "flora@gmail.com",
+            password: 1234
+        }
+        chai.request('http://localhost:8080')
+            .post('/api/auth/signup')
+            .send(userDetails)
+            .end((err, res) => {
+                expect(400);
+
+                done()
+            })
+    })
+    it("negative cases - show 400 error when no email", (done) => {
+        let userDetails = {
+            userName: "flora",
+            password: 1234
+        }
+        chai.request('http://localhost:8080')
+            .post('/api/auth/signup')
+            .send(userDetails)
+            .end((err, res) => {
+                expect(400);
+
+                done()
+            })
+    })
+    it("negative cases - should return 400 when email format is wrong", (done) => {
+        let userDetails = {
+            email: "udhaiya",
+            password: 456789
+        }
+        chai.request('http://localhost:8080')
+            .post('/api/auth/signup')
+            .send(userDetails)
+            .end((err, res) => {
+                expect(400);
+                console.log(res, "res")
+                res.body.should.have.property('msg').eql('Please enter a valid email');
+                done()
+            })
+    })
 })
-it("compare user entered password and hashed password", async (done) => {
-    let userDetails = {
-        userName: "Flynn",
-        email: "BrandonFlynn12@gmail.com",
-        password: "gemininerd"
-    }
-    let findEmail = UsersData.findOne({ email: userDetails[email] })
-    const isPasswordMatched = bcrypt.compare(userDetails?.password, findEmail?.password)
-    if (isPasswordMatched) {
-        expect(200)
-    }
-})
-//         it("negative cases - it should throw 400 if password has more than 6 characters in length"
-//             , (done) => {
-//                 let userDetails = {
-//                     userName: "Flynn",
-//                     email: "gemininerd11@gmail.com",
-//                     password: 123457890
-//                 }
-//                 chai.request('http://localhost:8080')
-//                     .post('/api/auth/signup')
-//                     .send(userDetails)
-//                     .end((err, res) => {
-//                         expect(400);
 
-//                         done()
-//                     })
-//             })
-//         it("negative cases - it should if password has less than 6 characters in length", (done) => {
-//             let userDetails = {
-//                 userName: "Flynn",
-//                 email: "flora@gmail.com",
-//                 password: 1234
-//             }
-//             chai.request('http://localhost:8080')
-//                 .post('/api/auth/signup')
-//                 .send(userDetails)
-//                 .end((err, res) => {
-//                     expect(400);
-
-//                     done()
-//                 })
-//         })
-//         it("negative cases - show 400 error when no userName", (done) => {
-//             let userDetails = {
-//                 email: "flora@gmail.com",
-//                 password: 1234
-//             }
-//             chai.request('http://localhost:8080')
-//                 .post('/api/auth/signup')
-//                 .send(userDetails)
-//                 .end((err, res) => {
-//                     expect(400);
-
-//                     done()
-//                 })
-//         })
-//         it("negative cases - show 400 error when no email", (done) => {
-//             let userDetails = {
-//                 userName:"flora",
-//                 password: 1234
-//             }
-//             chai.request('http://localhost:8080')
-//                 .post('/api/auth/signup')
-//                 .send(userDetails)
-//                 .end((err, res) => {
-//                     expect(400);
-
-//                     done()
-//                 })
-//         })
-//         it("negative cases - should return 400 when email format is wrong",(done)=>{
-//              let userDetails = {
-//                 email:"udhaiya",
-//                 password:456789
-//              }
-//              chai.request('http://localhost:8080')
-//              .post('/api/auth/signup')
-//              .send(userDetails)
-//              .end((err, res) => {
-//                  expect(400);
-//                  console.log(res,"res")
-//                  res.body.should.have.property('msg').eql('Please enter a valid email');
-//                  done()
-//              })
-//         })
-//     })
-// })
 
 describe("login-test-cases", () => {
     describe("login-cases", () => {
@@ -183,14 +197,6 @@ describe("login-test-cases", () => {
             expect(findEmail?.email).to.equal(userDetails?.email)
             done()
         })
-        // it("check if password match", (done) => {
-        //     let userDetails = {
-        //         email: "sunshine12@gmail.com",
-        //         password: 123456
-        //     }
-        //     let findEmail = UsersData.findOne({ email: userDetails[email] })
-
-        // })
         it("if email empty,it should throw 400", (done) => {
             let userDetails = {
                 password: 1234567
