@@ -5,8 +5,10 @@ const chaiHttp = require('chai-http')
 const UsersData = require('../models/UserModel')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const { connectDB } = require("../utils/databaseConnection")
 
 dotenv.config()
+connectDB()
 chai.use(chaiHttp)
 const expect = chai.expect
 const should = chai.should()
@@ -94,8 +96,8 @@ describe('sign api prep', () => {
                 .post('/api/auth/signup')
                 .send({ email: userDetails.email, password: userDetails.password })
                 .end((err, res) => {
-                    expect(400)
-
+                    expect(res.StatusCode).to.equal(400)
+                    expect(res.body.should.have.property('msg').eql('Please enter userName'))
                     done()
                 })
         })
@@ -104,8 +106,9 @@ describe('sign api prep', () => {
                 .post('/api/auth/signup')
                 .send({ userName: userDetails.userName, password: userDetails.password })
                 .end((err, res) => {
-                    expect(400)
+                    expect(res.statusCode).to.equal(400)
                     expect(err).to.be(undefined)
+                    expect(res.body.should.have.property('msg').eql('Please enter email'))
                     done()
                 })
         })
@@ -117,7 +120,7 @@ describe('sign api prep', () => {
                     expect(res.statusCode).to.equal(400)
                     console.log(res, 'res')
                     expect(err).to.be(undefined)
-                    expect(res.body.should.have.property('msg').eql('Please enter a valid email'))
+                    expect(res.body.should.have.property('msg').eql('Please enter a valid email format'))
                     done()
                 })
         })
@@ -137,7 +140,8 @@ describe('login-test-cases', () => {
                     expect(err).to.be(undefined)
                 })
         })
-        it('if user already has an account in db ', async (done) => {
+        it(`it should see whether the username already exists and
+         respond with 200 if it is present`, async (done) => {
             const findEmail = UsersData.findOne({ email: userDetails.email })
             expect(findEmail?.email).to.equal(userDetails?.email)
             done()
@@ -146,23 +150,21 @@ describe('login-test-cases', () => {
                 .send(userDetails)
                 .end((err, res) => {
                     expect(err).to.be(undefined)
+                    expect(res.body.should.have.property('msg').eql('User has been successfully logged in'))
                     expect(res.statusCode).to.equal(200)
                 })
         })
-        it('if email empty,it should throw 400', (done) => {
+        it('it should throw 400 if email is not provided', (done) => {
             chai.request('http://localhost:8080')
                 .post('/api/auth/login')
                 .send({ userName: userDetails.userName, password: userDetails.password })
                 .end((err, res) => {
                     expect(res.statusCode).to.equal(400)
-                     expect(err).to.be(undefined)
+                    expect(err).to.be(undefined)
                     done()
                 })
         })
-        it('if email empty,it should throw 400', (done) => {
-            const userDetails = {
-                email: 'flynn@gmail.com'
-            }
+        it('it should throw 400 if password is not provided', (done) => {
             chai.request('http://localhost:8080')
                 .post('/api/auth/login')
                 .send({ userName: userDetails.userName, email: userDetails.email })
@@ -181,8 +183,8 @@ describe('login-test-cases', () => {
 // no password,it should respond with status 400
 // no username it should respond with status 400
 
-describe('delete-test-cases', () => {
-    describe('positive-test-cases', () => {
+describe('when delete operation is executed', () => {
+    describe(`it should`, () => {
         let token
         before(() => {
             request(`${process.env.SERVER_URL}`)
@@ -193,45 +195,61 @@ describe('delete-test-cases', () => {
                     expect(res.statusCode).to.equal(200).or.to.equal(400)
                 })
         })
-        it('prerequisites are present ,should respond with status 200', (done) => {
+        it('respond with status code 200 when email password,token is passed',
+            (done) => {
+                chai.request('http://localhost:8080')
+                    .delete('api/auth/delete')
+                    .send({
+                        email: userDetails.email,
+                        password: userDetails.password,
+                        token
+                    })
+                    .end((err, res) => {
+                        expect(res.statusCode).to.equal(200)
+                        expect(err).to.be(undefined)
+                        expect(res.body.should.have.property('msg').eql(`Account has been
+                        successfully deleted`))
+                    })
+                // token
+                done()
+            })
+        it('respond with status code 400 when password is not passed', (done) => {
             chai.request('http://localhost:8080')
                 .delete('api/auth/delete')
-                .send({ ...userDetails, token })
+                .send({ email: userDetails.email, token: token })
                 .end((err, res) => {
-                    expect(200)
-                })
-            // token
-        })
-        it('no password is given,it should respond with status 400', (done) => {
-            delete userDetails.password
-            chai.request('http://localhost:8080')
-                .delete('api/auth/delete')
-                .send(userDetails)
-                .end((err, res) => {
-                    expect(400)
+                    expect(res.statusCode).to.equal(400)
+                    expect(res.body.should.have.property('msg').eql(`Password is required for
+                     deleting an account`))
                 })
             done()
         })
-        it('no email is given,it should respond with status 400', (done) => {
-            delete userDetails.email
+        it('respond with status code 400 when email is not passed', (done) => {
             chai.request('http://localhost:8080')
                 .delete('api/auth/delete')
-                .send(userDetails)
+                .send({
+                    token,
+                    password: userDetails.password,
+                })
                 .end((err, res) => {
-                    expect(400)
+                    expect(res.statusCode).to.equal(400)
+                    expect(res.body.should.have.property('msg').eql(`Email is required for
+                     deleting an account`))
                     done()
                 })
         })
     })
 })
-describe('delete-test-cases', () => {
-    it('no token is passed,it should respond with status 400', (done) => {
-        delete userDetails.token
+describe('delete api should throw error', () => {
+    it('with status code 400 when token is not passed', (done) => {
+
         chai.request('http://localhost:8080')
             .delete('api/auth/delete')
-            .send(userDetails)
+            .send({ email: userDetails.email, password: userDetails.password })
             .end((err, res) => {
-                expect(400)
+                expect(res.statusCode).to.equal(400)
+                expect(res.body.should.have.property('msg').eql(`please provide a token
+                for deleting an account`))
                 done()
             })
     })
