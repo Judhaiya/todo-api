@@ -34,6 +34,40 @@ let userDetails = {
     email: 'BrandonFlynn12@gmail.com',
     password: 'gemininerd'
 }
+// login form validation
+const signUpDetails = [
+    {
+        key: 'email',
+        wrongValues: ['udhaiya'],
+        correctValue: 'BrandonFlynn12@gmail.com'
+    },
+    {
+        key: 'userName',
+        wrongValues: [1234567],
+        correctValue: 'Flynn'
+    },
+    {
+        key: 'password',
+        wrongValue: [1234, 1234578901112],
+        correctValue: 'gemininerd'
+    }
+]
+
+describe('sign up cases', () => {
+    describe('when signup is called', () => {
+        it('does sign up works correctly', async (done) => {
+             signUpDetails.map(userDetail => { 
+                // if wrong values are entered
+                const filterUserDetails = signUpDetails.filter(detail=> detail.key !== userDetail.key)
+                const correctDetails = filterUserDetails.map(({correctValue, key})=>{ return {[key]: correctValue
+                  }})
+                 // reduce the object
+                userDetail?.wrongValues.map(wrongValue => {
+                  })
+            })
+        })
+    })
+})
 describe('sign api prep', () => {
     let token
     const findEmail = UsersData.findOne({ email: userDetails.email })
@@ -99,7 +133,7 @@ describe('sign api prep', () => {
                 .post('/api/auth/signup')
                 .send({ email: userDetails.email, password: userDetails.password })
                 .end((err, res) => {
-                    expect(res.StatusCode).to.equal(400)
+                    expect(res.statusCode).to.equal(400)
                     expect(res.body.should.have.property('msg').eql('Please enter userName'))
                     done()
                 })
@@ -259,6 +293,7 @@ describe('delete api should throw error', () => {
                 expect(res.statusCode).to.equal(400)
                 expect(res.body.should.have.property('msg').eql(`please provide a token
                 for deleting an account`))
+
                 done()
             })
     })
