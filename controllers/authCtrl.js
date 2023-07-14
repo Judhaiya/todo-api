@@ -8,10 +8,11 @@ const bcrypt = require("bcrypt")
 //     const emailRegex = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/, "gm");
 //     return emailRegex.test(emailValidation)
 // }
-exports.emailValidation = (givenValue) => {
+const emailValidation = (givenValue) => {
   const emailRegex = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/, "gm");
   return emailRegex.test(givenValue)
 }
+exports.emailValidation = emailValidation
 exports.signup = async (req, res) => {
   const email = req?.body?.email
   const userName = req?.body?.userName
@@ -28,13 +29,13 @@ exports.signup = async (req, res) => {
     console.log(err, "error")
   }
   if (!emailValidation(email)) {
-    res.status(400).json({ msg: "Please enter a valid email" })
+    res.status(400).json({ msg: "email is invalid" })
   }
   if (password.length > 6) {
-    res.status(400).json({ msg: "password length should not be greater than 6" })
+    res.status(400).json({ msg: "password is invalid" })
   }
   if (password.length < 6) {
-    res.status(400).json({ msg: "password length should not be less than 6" })
+    res.status(400).json({ msg: "password is invalid" })
   }
   else {
     try {
@@ -48,7 +49,7 @@ exports.signup = async (req, res) => {
       console.log(accessToken)
       if (newUser) {
         res.status(200).json({
-          msg: "user details has been successfully stored in db",
+          msg: "User account has been created successfully",
           token: accessToken
         })
       }

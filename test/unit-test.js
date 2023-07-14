@@ -1,4 +1,5 @@
-const expect = require("chai").expect
+const expect = require("chai"
+).expect
 const { emailValidation } = require("../controllers/authCtrl")
 // sample test cases
 

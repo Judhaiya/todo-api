@@ -52,32 +52,10 @@ const payloadDetails = [
     correctValue: "gemininerd"
   }
 ]
-const deleteDetails = [
-  {
-    key: "email",
-    wrongValues: ["udhaiya"],
-    correctValue: "BrandonFlynn12@gmail.com"
-  },
-  {
-    key: "password",
-    wrongValue: [1234, 1234578901112],
-    correctValue: "gemininerd"
-  },
-  {
-    key: "token",
-    wrongValue: "1234556",
-    correctValue: ""
-  }
-]
+
 function apiNegative(expectedUrl, expectedDetails, token) {
   expectedDetails.map(userDetail => {
     // if wrong values are entered
-    if (token !== undefined) {
-      const findToken = expectedDetails.findIndex(detail => detail.key === "token")
-      if (findToken) {
-        expectedDetails[findToken].token = token
-      }
-    }
     const filterUserDetails = expectedDetails.filter(detail => detail.key !== userDetail.key)
     const correctDetails = filterUserDetails.reduce((prev, cur) => {
       return Object.assign(prev, { [cur.key]: cur.correctValue })
@@ -127,7 +105,7 @@ describe("sign api prep", () => {
           expect(err).to.be(undefined)
           expect(res.statusCode).to.equal(200)
           res.body.should.have.property("msg")
-          expect(res.body.msg).to.be.eql("user details has been successfully stored in db")
+          expect(res.body.msg).to.be.eql("User account has been created successfully")
           if (findEmail) {
             expect(userDetails).to.deep.equal(findEmail)
           }
@@ -139,7 +117,7 @@ describe("sign api prep", () => {
           done()
         })
     })
-    it("signup responds 400 in the following scenarios"
+    it("should return 400 if invalid data is fed"
       , async (done) => {
         apiNegative("/api/auth/signup", payloadDetails)
         done()
@@ -157,7 +135,7 @@ describe("login-test-cases", () => {
         .end((err, res) => {
           token = res.body.token
           expect(res.statusCode).to.be.oneOf([200, 400])
-          expect(res.body.should.have.property("msg").to.be.oneOf(["user details has been successfully stored in db",
+          expect(res.body.should.have.property("msg").to.be.oneOf(["User account has been created successfully",
             "User email already exists"
           ]))
           expect(err).to.be(undefined)
@@ -178,7 +156,7 @@ describe("login-test-cases", () => {
       done()
     })
 
-    it("login api will throw 400 in the following scenarios", (done) => {
+    it("should return 400 if invalid data is fed", (done) => {
       apiNegative("/api/auth/login", payloadDetails)
       done()
     })
@@ -202,7 +180,7 @@ describe("when delete operation is executed", () => {
           token = res.body.token
           expect(res.statusCode).to.be.oneOf([200, 400])
           expect(res.body.should.have.property("msg")
-            .to.be.oneOf(["user details has been successfully stored in db",
+            .to.be.oneOf(["User account has been created successfully",
               "User email already exists"
             ]))
         })
@@ -225,8 +203,25 @@ describe("when delete operation is executed", () => {
         // token
         done()
       })
-    it("respond with status code 400 when the following scenarios are met", (done) => {
-      apiNegative(deleteDetails, "api/auth/delete", token)
+    it("should return 400 if invalid data is fed", (done) => {
+      const deleteDetails = [
+        {
+          key: "email",
+          wrongValues: ["udhaiya"],
+          correctValue: "BrandonFlynn12@gmail.com"
+        },
+        {
+          key: "password",
+          wrongValue: [1234, 1234578901112],
+          correctValue: "gemininerd"
+        },
+        {
+          key: "token",
+          wrongValue: "1234556",
+          correctValue: token
+        }
+      ]
+      apiNegative(deleteDetails, "api/auth/delete")
       done()
     })
   })
