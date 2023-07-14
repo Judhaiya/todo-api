@@ -13,11 +13,10 @@ exports.emailValidation = (givenValue) => {
   return emailRegex.test(givenValue)
 }
 exports.signup = async (req, res) => {
-  const email = req?.body?.email;
-  const userName = req?.body?.userName;
+  const email = req?.body?.email
+  const userName = req?.body?.userName
   const password = req?.body?.password
   console.log(userName, "userName")
-  // console.log(findEmail,"find e") 
   try {
     const findEmail = await UsersData.findOne({ email })
     if (findEmail) {
@@ -45,7 +44,7 @@ exports.signup = async (req, res) => {
         password
       }).save()
       // generate token
-      let accessToken = jwt.sign({ payload: email, expiresIn: "2h" }, process.env.JWT_SECRET)
+      const accessToken = jwt.sign({ payload: email, expiresIn: "2h" }, process.env.JWT_SECRET)
       console.log(accessToken)
       if (newUser) {
         res.status(200).json({
@@ -53,12 +52,10 @@ exports.signup = async (req, res) => {
           token: accessToken
         })
       }
-    }
-    catch (err) {
+    } catch (err) {
       console.log(err)
     }
   }
-
 }
 
 exports.login = async (req, res) => {
@@ -77,13 +74,12 @@ exports.login = async (req, res) => {
         res.status(400).json({ msg: "Password doesn't match" })
       }
       else {
-        let accessToken = jwt.sign({ payload: email, expiresIn: "2h" }, process.env.JWT_SECRET)
+        const accessToken = jwt.sign({ payload: email, expiresIn: "2h" }, process.env.JWT_SECRET)
         console.log(accessToken)
         res.status(200).json({ msg: "User logged in successfully", token: accessToken })
       }
     }
-  }
-  catch (err) {
+  } catch (err) {
     console.log(err)
   }
 }
