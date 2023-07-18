@@ -2,6 +2,8 @@
 const UsersData = require("../models/UserModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
+const dotenv = require("dotenv")
+dotenv.config()
 
 // validation email
 //  const emailValidation = () => {
@@ -69,7 +71,7 @@ exports.login = async (req, res) => {
     if (!findEmail) {
       res.status(400).json({ msg: "Invalid User email" })
     } else {
-      const validPassword = await bcrypt.compare(password, userPassword)
+      const validPassword = await bcrypt.compare(password.toString(), userPassword)
       if (!validPassword) {
         console.log(validPassword, password.toString() === userPassword, "vp")
         res.status(400).json({ msg: "Password doesn't match" })
@@ -82,5 +84,34 @@ exports.login = async (req, res) => {
     }
   } catch (err) {
     console.log(err)
+  }
+}
+
+exports.deleteUser = async (req, res) => {
+  const email = req?.body?.email
+  const password = req?.body?.password
+  const bearerToken = req?.headers?.authorization
+  console.log(bearerToken,"bt")
+  const requiredToken = bearerToken?.split(" ")[1]
+  try {
+    if (email == "" && password == "" && bearerToken == undefined) return
+    const validCredentials = await UsersData.findOne({ email })
+    if (validCredentials) {
+      console.log(validCredentials, "vc")
+      const validPassword = await bcrypt.compare(password.toString(), validCredentials.password)
+      if (!validPassword) {
+        res.status(400).json("Password is invalid")
+      }
+      const validUser = jwt.verify(requiredToken, process.env.JWT_SECRET)
+      if (!validUser) {
+        res.status(400).json("Token is invalid")
+      }
+      const isUserDeleted = await UsersData.deleteOne({ email: validCredentials?.email })
+      if (isUserDeleted) {
+        res.status(200).json("User account has been successfully deleted")
+      }
+    }
+  } catch (err) {
+    console.log(err, "error occured")
   }
 }

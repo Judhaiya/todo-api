@@ -18,29 +18,13 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
   const user = this
-  console.log(user, "this")
-  bcrypt.genSalt(10)
-    .then(salt => {
-      console.log(user.password)
-      return bcrypt.hash(user.password, salt)
-    })
-    .catch(err => {
-      console.log(err)
-    })
-    .then(hashedPassword => {
-      console.log(hashedPassword, "hp")
-      user.password = hashedPassword
-      // console.log(user, "password")
-
-      return next(null, user)
-    })
-    .catch(err => {
-      console.log(err)
-    })
+  console.log(user, "this after save")
+  const salt = await bcrypt.genSalt(10)
+  const hashedPassword = await bcrypt.hash(user.password, salt)
+  user.password = hashedPassword
+  next()
+  console.log(user, "pre-save-complete")
 })
-// userSchema.post("save", async function () {
-//   const user = this
-//   console.log("userdetails after saving", user)
-// })
+
 const UsersData = mongoose.model("UsersData", userSchema)
 module.exports = UsersData
