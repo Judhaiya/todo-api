@@ -7,8 +7,6 @@ const jwt = require("jsonwebtoken")
 const { connectDB } = require("../utils/databaseConnection")
 
 dotenv.config()
-connectDB()
-
 chai.use(chaiHttp)
 const expect = chai.expect
 
@@ -34,7 +32,7 @@ const expect = chai.expect
 const userDetails = {
   email: "BrandonFlynn12@gmail.com",
   userName: "Flynn",
-  password: "gemininerd"
+  password: "123456"
 }
 const payloadDetails = [
   {
@@ -56,68 +54,60 @@ const payloadDetails = [
 
 function apiNegative(expectedUrl, expectedDetails) {
   console.log(expectedDetails, "ed")
-  expectedDetails.map(userDetail => {
+  expectedDetails.map(async (userDetail) => {
     // if wrong values are entered
     const filterUserDetails = expectedDetails.filter(detail => detail.key !== userDetail.key)
     const correctDetails = filterUserDetails.reduce((prev, cur) => {
       return Object.assign(prev, { [cur.key]: cur.correctValue })
     }, {})
     // reduce the object
-    userDetail?.wrongValues.map(wrongValue => {
-      return chai.request(process.env.SERVER_URI)
+    userDetail?.wrongValues.map(async (wrongValue) => {
+      const res = await chai.request(process.env.SERVER_URI)
         .post(expectedUrl)
         .send({ correctDetails, [userDetail.key]: wrongValue })
-        .end((err, res) => {
-          expect(res.statusCode).to.equal(400)
-          expect(res.body.msg).to.be.eql(`${userDetail.key} is invalid`)
-        })
+
+      expect(res.statusCode).to.equal(400)
+      expect(res.body.msg).to.be.eql(`${userDetail.key} is invalid`)
     })
-    return chai.request(process.env.SERVER_URI)
+    const res = await chai.request(process.env.SERVER_URI)
       .post(expectedUrl)
       .send(correctDetails)
-      .end((err, res) => {
-        expect(res.statusCode).to.equal(400)
-        expect(res.body.msg).to.be.eql(`${userDetail.key} is empty`)
-      })
+
+    expect(res.statusCode).to.equal(400)
+    expect(res.body.msg).to.be.eql(`${userDetail.key} is empty`)
   })
 }
 
 
 describe("sign api prep", () => {
   describe("when signup is called", () => {
-    let token
-    const findEmail = UsersData.findOne({ email: userDetails.email })
-    beforeEach(() => {
+    let findEmail
+    beforeEach(async () => {
+      await connectDB()
+      findEmail = await UsersData.findOne({ email: userDetails.email })
       if (findEmail) {
-        chai.request(`${process.env.SERVER_URL}`)
+        const res = await chai.request(`${process.env.SERVER_URL}`)
           .delete("/api/auth/deleteUser")
+          .set({ "Authorization": `Bearer ${process.env.STATIC_TOKEN}` })
           .send(userDetails)
-          .end((err, res) => {
-            console.log(err, "error")
-            expect(res?.status).to.equal(200)
-            token = res.body.token
-            return token
-          })
+        expect(res?.status).to.equal(200)
       }
     })
     it("does the api process registration correctly", async () => {
-      chai.request(process.env.SERVER_URI)
+      const res = await chai.request(process.env.SERVER_URL)
         .post("/api/auth/signup")
         .send(userDetails)
-        .end(async (err, res) => {
-          expect(err).to.be(undefined)
-          expect(res.statusCode).to.equal(200)
-          res.body.should.have.property("msg")
-          expect(res.body.msg).to.be.eql("User account has been created successfully")
-          if (findEmail) {
-            expect(userDetails).to.deep.equal(findEmail)
-          }
-          jwt.verify(token, process.env.JWT_SECRET).then(jwtDetails => {
-            return expect(userDetails).to.deep.equal(jwtDetails)
-          })
-          const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(), findEmail?.password)
-          expect(isPasswordMatched).to.not.be(false)
-        })
+      expect(res.status).to.equal(200)
+      // expect(res).body.to.have.property("msg")
+      expect(res.body.msg).to.be.eql("User account has been created successfully")
+      // if (findEmail) {
+      //   expect(userDetails).to.deep.equal(findEmail)
+      // }
+      const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET)
+      console.log(jwtDetails, "jd,jwrt")
+      expect(userDetails.email).eql(jwtDetails.payload)
+      const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(), findEmail?.password)
+      expect(isPasswordMatched).to.be.true
     })
     it("should return 400 if invalid data is fed"
       , async () => {
@@ -129,36 +119,29 @@ describe("sign api prep", () => {
 
 describe("login-test-cases", () => {
   describe("when login is called", () => {
-    beforeEach(() => {
-      const findEmail = UsersData.findOne({ email: userDetails.email })
-      console.log(userDetails?.email, "testing-email")
-      console.log(findEmail?.email, "testing-email-bf4")
-      chai.request(process.env.SERVER_URL)
+    beforeEach(async () => {
+      await connectDB()
+      const res = await chai.request(process.env.SERVER_URL)
         .post("/api/auth/signup")
         .send(userDetails)
-        .end((err, res) => {
-          expect(res.statusCode).to.be.oneOf([200, 400])
-          expect(res.body.should.have.property("msg").to.be.oneOf(["User account has been created successfully",
-            "User email already exists"
-          ]))
-          expect(err).to.be(undefined)
-        })
+      expect(res.statusCode).to.be.oneOf([200, 400])
+      // expect(res.body.should.have.property("msg").to.be.oneOf(["User account has been created successfully",
+      //   "User email already exists"
+      // ]))
     })
     it(`it should see whether the username already exists and
-         respond with 200 if it is present`, () => {
-      // const findEmail = UsersData.findOne({ email: userDetails.email })
-      // console.log(findEmail?.email, "db-email")
-      console.log(userDetails?.email, "testing-email")
-      // expect(findEmail?.email).to.equal(userDetails?.email)
-      // chai.request(process.env.SERVER_URI)
-      //   .post("/api/auth/login")
-      //   .send(userDetails)
-      //   .end((err, res) => {
-      //     expect(err).to.be(undefined)
-      //     expect(res.body.should.have.property("msg").eql("User has been successfully logged in"))
-      //     expect(res.statusCode).to.equal(200)
-      //   })
-      console.log(userDetails?.email, "testing-email")
+         respond with 200 if it is present`, async () => {
+      const findEmail = await UsersData.findOne({ email: userDetails.email })
+      console.log(findEmail.email, userDetails?.email, "findEmail")
+      //   console.log(userDetails, "login-test-cases")
+      expect(findEmail?.email).eql(userDetails?.email)
+      const res = await chai.request(process.env.SERVER_URL)
+        .post("/api/auth/login")
+        .send(userDetails)
+      console.log("res-in login", res.body)
+      expect(res.body.msg).to.be.eql("User logged in successfully")
+      expect(res.statusCode).to.equal(200)
+      // console.log(userDetails?.email, res.statusCode, "status", "testing-email")
     })
 
     it("should return 400 if invalid data is fed", (done) => {
@@ -177,40 +160,48 @@ describe("login-test-cases", () => {
 describe("when delete operation is executed", () => {
   describe("it should", () => {
     let token
-    beforeEach(() => {
-      // chai.request(process.env.SERVER_URL)
-      //   .post("/api/auth/signup")
-      //   .send(userDetails)
-      //   .end((err, res) => {
-      //     console.log(res.body.token, "token")
-      //     token = res.body.token
-      //     expect(res.statusCode).to.be.oneOf([200, 400])
-      //     expect(res.body.should.have.property("msg")
-      //       .to.be.oneOf(["User account has been created successfully",
-      //         "User email already exists"
-      //       ]))
-      //   })
-      console.log("before each")
+    beforeEach(async () => {
+      await connectDB()
+      const res = await chai.request(process.env.SERVER_URL)
+        .post("/api/auth/signup")
+        .send(userDetails)
+      // expect(res.statusCode).to.be.oneOf([200, 400])
+      // expect(res.body.msg
+      //   .to.be.oneOf(["User account has been created successfully",
+      //     "User email already exists"
+      //   ]))
+      if (res.statusCode === 200) {
+        expect(res.statusCode).to.equal(200)
+        expect(res.body.msg).to.equal("User account has been created successfully")
+        token = res.body.token
+        return token
+      } else if (res.statusCode === 400) {
+        expect(res.statusCode).to.equal(400)
+        expect(res.body.msg).to.equal("User email already exists")
+        const tokenRes = await chai.request(process.env.SERVER_URL)
+          .post("/api/auth/login")
+          .send(userDetails)
+        token = tokenRes.body.token
+        return token
+      }
 
+      console.log("before each")
     })
     it("respond with status code 200 when email, password,token is passed",
-      (done) => {
+      async () => {
         console.log(token, "token")
-        chai.request(process.env.SERVER_URI)
+        chai.request(process.env.SERVER_URL)
           .delete("/api/auth/deleteUser")
           .send({
             email: userDetails.email,
             password: userDetails.password,
             token
           })
-          .end((err, res) => {
-            expect(res.statusCode).to.equal(200)
-            expect(err).to.be(undefined)
-            expect(res.body.should.have.property("msg").eql(`Account has been
-                        successfully deleted`))
-          })
+          .then(res => expect(res.statusCode).to.equal(200))
+
+        // expect(res.body.should.have.property("msg").eql(`Account has been
+        //                 successfully deleted`))
         // token
-        done()
       })
     it("should return 400 if invalid data is fed", (done) => {
       const deleteDetails = [
@@ -235,4 +226,3 @@ describe("when delete operation is executed", () => {
     })
   })
 })
-

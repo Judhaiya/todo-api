@@ -19,29 +19,23 @@ exports.signup = async (req, res) => {
   const email = req?.body?.email
   const userName = req?.body?.userName
   const password = req?.body?.password
-  console.log(userName, "userName")
   try {
     const findEmail = await UsersData.findOne({ email })
     if (findEmail) {
-      res.status(400).json({ msg: "User email already exists" })
+      return res.status(400).json({ msg: "User email already exists" })
     } else {
       console.log("no correlating email found")
     }
-  } catch (err) {
-    console.log(err, "error")
-  }
-  if (!emailValidation(email)) {
-    res.status(400).json({ msg: "email is invalid" })
-  }
-  if (password.length > 6) {
-    res.status(400).json({ msg: "password is invalid" })
-  }
-  if (password.length < 6) {
-    res.status(400).json({ msg: "password is invalid" })
-  }
-  else {
-    try {
-      const newUser = new UsersData({
+    if (!emailValidation(email)) {
+      return res.status(400).json({ msg: "email is invalid" })
+    }
+    if (password.length > 6) {
+      return res.status(400).json({ msg: "password is invalid" })
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ msg: "password is invalid" })
+    } else {
+      const newUser = await new UsersData({
         email,
         userName,
         password
@@ -50,14 +44,14 @@ exports.signup = async (req, res) => {
       const accessToken = jwt.sign({ payload: email, expiresIn: "2h" }, process.env.JWT_SECRET)
       console.log(accessToken)
       if (newUser) {
-        res.status(200).json({
+        return res.status(200).json({
           msg: "User account has been created successfully",
           token: accessToken
         })
       }
-    } catch (err) {
-      console.log(err)
     }
+  } catch (err) {
+    console.log(err)
   }
 }
 
@@ -66,20 +60,18 @@ exports.login = async (req, res) => {
   const password = req.body.password
   try {
     const findEmail = await UsersData.findOne({ email })
-    console.log(findEmail, "userdetails")
     const userPassword = findEmail.password
     if (!findEmail) {
-      res.status(400).json({ msg: "Invalid User email" })
+      return res.status(400).json({ msg: "Invalid User email" })
     } else {
       const validPassword = await bcrypt.compare(password.toString(), userPassword)
       if (!validPassword) {
         console.log(validPassword, password.toString() === userPassword, "vp")
-        res.status(400).json({ msg: "Password doesn't match" })
-      }
-      else {
+        return res.status(400).json({ msg: "Password doesn't match" })
+      } else {
         const accessToken = jwt.sign({ payload: email, expiresIn: "2h" }, process.env.JWT_SECRET)
         console.log(accessToken)
-        res.status(200).json({ msg: "User logged in successfully", token: accessToken })
+        return res.status(200).json({ msg: "User logged in successfully", token: accessToken })
       }
     }
   } catch (err) {
@@ -91,27 +83,27 @@ exports.deleteUser = async (req, res) => {
   const email = req?.body?.email
   const password = req?.body?.password
   const bearerToken = req?.headers?.authorization
-  console.log(bearerToken,"bt")
   const requiredToken = bearerToken?.split(" ")[1]
   try {
-    if (email == "" && password == "" && bearerToken == undefined) return
+    if (email === "" && password === "" && bearerToken === undefined) return
     const validCredentials = await UsersData.findOne({ email })
-    if (validCredentials) {
-      console.log(validCredentials, "vc")
-      const validPassword = await bcrypt.compare(password.toString(), validCredentials.password)
-      if (!validPassword) {
-        res.status(400).json("Password is invalid")
-      }
-      const validUser = jwt.verify(requiredToken, process.env.JWT_SECRET)
-      if (!validUser) {
-        res.status(400).json("Token is invalid")
-      }
-      const isUserDeleted = await UsersData.deleteOne({ email: validCredentials?.email })
-      if (isUserDeleted) {
-        res.status(200).json("User account has been successfully deleted")
-      }
+    if (!validCredentials) {
+      return res.status(400).json("please provide a valid email")
+    }
+    const validPassword = await bcrypt.compare(password.toString(), validCredentials.password)
+    if (!validPassword) {
+      return res.status(400).json("Password is invalid")
+    }
+    const validUser = jwt.verify(requiredToken, process.env.JWT_SECRET)
+    if (!validUser) {
+      return res.status(400).json("Token is invalid")
+    }
+    const isUserDeleted = await UsersData.deleteOne({ email: validCredentials?.email })
+    if (isUserDeleted) {
+      return res.status(200).json("User account has been successfully deleted")
     }
   } catch (err) {
     console.log(err, "error occured")
+    return res.status(500).json("Something went wrong while sending request")
   }
 }
