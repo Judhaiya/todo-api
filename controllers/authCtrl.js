@@ -52,6 +52,7 @@ exports.signup = async (req, res) => {
     }
   } catch (err) {
     console.log(err)
+    return res.status(500).json("Something went wrong while sending request")
   }
 }
 
@@ -76,6 +77,7 @@ exports.login = async (req, res) => {
     }
   } catch (err) {
     console.log(err)
+    return res.status(500).json("Something went wrong while sending request")
   }
 }
 
