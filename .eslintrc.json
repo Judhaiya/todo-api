@@ -9,6 +9,7 @@
         "sourceType": "module"
     },
     "rules": {
-        "quotes": [2,"double"]
+        "quotes": [2,"double"],
+        "semi": [2, "always"]
     }
 }

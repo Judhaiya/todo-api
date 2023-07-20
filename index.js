@@ -1,19 +1,16 @@
-const express = require("express")
-const authRoutes = require("./routes/AuthRoute")
-const { connectDB } = require("./utils/databaseConnection")
+const express = require("express");
+const authRoutes = require("./routes/authentication");
+const { connectDB } = require("./utils/databaseConnection");
+const app = express();
+const dotenv = require("dotenv");
 
-const app = express()
-const dotenv = require("dotenv")
-dotenv.config()
+dotenv.config();
 
 const startServer = async () => {
-  await connectDB()
-  app.listen(8080, () => {
-    console.log("listening to port 8080")
-  })
-}
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json())
-startServer()
+  await connectDB();
+  app.listen(8080);
+};
+app.use("/api/auth", express.json());
+app.use("/api/auth", authRoutes);
 
-app.use("/api/auth", authRoutes)
+startServer();
