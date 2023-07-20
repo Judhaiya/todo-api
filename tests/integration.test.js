@@ -90,13 +90,11 @@ describe("sign api prep", () => {
       }
     });
     it("does the api process registration correctly", async () => {
-      console.log(userDetails, "userdetails before signup");
       const res = await chai.request(process.env.SERVER_URL)
         .post("/api/auth/signup")
         .send(userDetails);
       expect(res.status).to.equal(200);
       expect(res.body.msg).to.be.eql("User account has been created successfully");
-      console.log(regUserDetails, userDetails, "comparing two details");
       const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET);
       expect(userDetails.email).eql(jwtDetails.payload);
       const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
@@ -119,7 +117,8 @@ describe("login-test-cases", () => {
         .post("/api/auth/signup")
         .send(userDetails);
       expect(res.statusCode).to.be.oneOf([200, 400]);
-      console.log(res.body[0], "signup response while logging 101");
+      expect(res.body.msg).to.be.oneOf(["User email already exists",
+        "User account has been created successfully"]);
     });
     it(`it should see whether the username already exists and
          respond with 200 if it is present`, async () => {
@@ -128,7 +127,6 @@ describe("login-test-cases", () => {
       const res = await chai.request(process.env.SERVER_URL)
         .post("/api/auth/login")
         .send(userDetails);
-      console.log("res-in login", res.body);
       expect(res.body.msg).to.be.eql("User logged in successfully");
       expect(res.statusCode).to.equal(200);
     });
@@ -168,8 +166,6 @@ describe("when delete operation is executed", () => {
         token = tokenRes.body.token;
         return token;
       }
-
-      console.log("before each");
     });
     it("respond with status code 200 when email, password,token is passed",
       async () => {
@@ -180,7 +176,6 @@ describe("when delete operation is executed", () => {
             email: userDetails.email,
             password: userDetails.password
           });
-        console.log(res, "res.status while deleting user");
         expect(res.statusCode).to.equal(200);
         expect(res.body.msg).to.equal("Account has been successfully deleted");
         // token
