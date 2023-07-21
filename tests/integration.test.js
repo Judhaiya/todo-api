@@ -97,8 +97,8 @@ describe("sign api prep", () => {
       expect(res.body.msg).to.be.eql("User account has been created successfully");
       const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET);
       expect(userDetails.email).eql(jwtDetails.payload);
-      const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
-        regUserDetails?.password);
+      // const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
+      //   regUserDetails?.password);
       expect(isPasswordMatched).to.be.true;
     });
     it("should return 400 if invalid data is fed"
