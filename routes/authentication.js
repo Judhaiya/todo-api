@@ -13,23 +13,11 @@ router.post("/signup", async (req, res) => {
     }
   };
   try {
-    console.log(req.body, userSchema, "body from user");
     const result = validateSchema.validate({
       email: req.body.email,
       password: req.body.password,
       userName: req.body.userName
     }, userSchema);
-    // console.log(result, "validate user details");
-    // console.log(result.errors.map(err => {
-    //   if (err.property === "instance.email") {
-    //     return `email is ${err.message}`;
-    //   }
-    //   if (err.property === "instance.password") {
-    //     return `password is ${err.message}`;
-    //   }
-    //   return err.stack;
-    // })
-    // )
     if (result.errors.length > 0) {
       const errorMsg = result.errors.map(err => err.stack);
       res.status(400).json({ msg: errorMsg?.toString() });

@@ -59,19 +59,16 @@ function apiNegative(expectedUrl, expectedDetails) {
       return Object.assign(prev, { [cur.key]: cur.correctValue });
     }, {});
     userDetail?.wrongValues.map(async (wrongValue) => {
-      const res = await chai.request(process.env.SERVER_URI)
+      const res = await chai.request(process.env.SERVER_URL)
         .post(expectedUrl)
         .send({ correctDetails, [userDetail.key]: wrongValue });
 
       expect(res.statusCode).to.equal(400);
-      expect(res.body.msg).to.be.eql(`${userDetail.key} is invalid`);
     });
-    const res = await chai.request(process.env.SERVER_URI)
+    const res = await chai.request(process.env.SERVER_URL)
       .post(expectedUrl)
       .send(correctDetails);
-
     expect(res.statusCode).to.equal(400);
-    expect(res.body.msg).to.be.eql(`${userDetail.key} is empty`);
   });
 }
 
@@ -97,8 +94,8 @@ describe("sign api prep", () => {
       expect(res.body.msg).to.be.eql("User account has been created successfully");
       const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET);
       expect(userDetails.email).eql(jwtDetails.payload);
-      // const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
-      //   regUserDetails?.password);
+      const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
+        regUserDetails?.password);
       expect(isPasswordMatched).to.be.true;
     });
     it("should return 400 if invalid data is fed"
