@@ -4,24 +4,35 @@ const Validator = require("jsonschema").Validator;
 const validateSchema = new Validator();
 
 const router = express.Router();
+
+const userSchema = {
+  properties: {
+    email: { type: "string", format: "email" },
+    password: { type: "string", minLength: 6, maxLength: 6 }
+  },
+  required: ["email", "password"]
+};
+
+const validateUserSchema = (userSchema, req) => {
+  const userPayload = req.body.userName !== undefined ?
+    { email: req.body.email, password: req.body.password, userName: req.body.userName }
+    : { email: req.body.email, password: req.body.password };
+  const result = validateSchema.validate(userPayload, userSchema);
+  return result;
+};
+
 router.post("/signup", async (req, res) => {
-  const userSchema = {
-    properties: {
-      email: { type: "string", format: "email" },
-      userName: { type: "string" },
-      password: { type: "string", minLength: 6 }
-    }
-  };
   try {
-    const result = validateSchema.validate({
-      email: req.body.email,
-      password: req.body.password,
-      userName: req.body.userName
-    }, userSchema);
-    if (result.errors.length > 0) {
-      const errorMsg = result.errors.map(err => err.stack);
+    const signupSchema = {
+      properties: { ...userSchema.properties, userName: { type: "string" } },
+      required: [...userSchema.required, "userName"]
+    };
+    console.log(signupSchema, "signup");
+    if (validateUserSchema(signupSchema, req).errors.length > 0) {
+      const errorMsg = validateUserSchema(signupSchema, req).errors.map(err => err.stack);
       res.status(400).json({ msg: errorMsg?.toString() });
     }
+    console.log(validateUserSchema(signupSchema, req), await saveUserData(req.body), "validateUserSchema");
     const [isEmailFound, token] = await saveUserData(req.body);
 
     if (isEmailFound) {
@@ -39,22 +50,11 @@ router.post("/signup", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const userSchema = {
-    properties: {
-      email: { type: "string", format: "email" },
-      password: { type: "string", minLength: 6 }
-    },
-    required: ["email", "password"]
-  };
-  const result = validateSchema.validate({
-    email: req.body.email,
-    password: req.body.password
-  }, userSchema);
-  if (result.errors.length > 0) {
-    const errorMsg = result.errors.map(err => err.stack);
-    res.status(400).json({ msg: errorMsg?.toString() });
-  }
   try {
+    if (validateUserSchema(userSchema, req).errors.length > 0) {
+      const errorMsg = validateUserSchema(userSchema, req).errors.map(err => err.stack);
+      res.status(400).json({ msg: errorMsg?.toString() });
+    }
     const [success, msg, accessToken] = await loginUser(req.body);
     if (success === false && accessToken === undefined) {
       res.status(400).json({ msg });
@@ -72,6 +72,11 @@ router.post("/login", async (req, res) => {
 
 router.delete("/deleteUser", async (req, res) => {
   try {
+    if (validateUserSchema(userSchema, req).errors.length > 0) {
+      const errorMsg = validateUserSchema(userSchema, req).errors
+        .map(err => err.stack);
+      res.status(400).json({ msg: errorMsg?.toString() });
+    }
     const [success, msg] = await deleteAccount(req);
     if (success === false) {
       res.status(400).json({ msg });
