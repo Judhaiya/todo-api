@@ -1,11 +1,13 @@
 const { userSignup, userLogin, deleteUserAccount } = require("../features/user");
 
-exports.saveUserData = async (userDetail) => {
-  userSignup(userDetail);
+exports.saveUserData = async (userDetails) => {
+  const token = await userSignup(userDetails);
+  return token;
 };
 
 exports.loginUser = async (userDetails) => {
-  userLogin(userDetails);
+  const token = await userLogin(userDetails);
+  return token;
 };
 
 exports.deleteAccount = async (req) => {

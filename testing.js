@@ -20,8 +20,10 @@ class User {
        
     }
 }
+exports.age = 12;
 
 const user = new User();
 user.name = "yellowing";
 checkEligibility(20);
 console.log(user);
+console.log(this, "age");
