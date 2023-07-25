@@ -1,44 +1,53 @@
 const Validator = require("jsonschema").Validator;
+const { validationError, errorHandler } = require("../services/errors");
+
 const validateSchema = new Validator();
 
-const userSchema = {
-  properties: {
-    email: { type: "string", format: "email" },
-    password: { type: "string", minLength: 6, maxLength: 6 }
-  },
-  required: ["email", "password"]
+const getUserSchema = (path) => {
+  let requiredSchema;
+  switch (path) {
+    case "/signup":
+      requiredSchema = {
+        properties: {
+          email: { type: "string", format: "email" },
+          password: { type: "string", minLength: 6, maxLength: 6 },
+          userName: { type: "string" }
+        },
+        required: ["email", "password", "userName"]
+      };
+      break;
+    default:
+      requiredSchema = {
+        properties: {
+          email: { type: "string", format: "email" },
+          password: { type: "string", minLength: 6, maxLength: 6 }
+        },
+        required: ["email", "password"]
+      };
+  };
+  return requiredSchema;
 };
-const CustomError = (msg, errCode) => {
-  const error = new Error();
-  error.name = "validation Error";
-  error.code = errCode;
-  error.msg = msg;
-  return error;
+const getPayload = (path, payloadDetails) => {
+  let requiredPayload;
+  switch (path) {
+    case "/signup":
+      requiredPayload = { email: payloadDetails.email, password: payloadDetails.password, userName: payloadDetails.userName };
+      break;
+    default:
+      requiredPayload = { email: payloadDetails.email, password: payloadDetails.password };
+  }
+  return requiredPayload;
 };
 
 exports.validateUserSchema = async (req, res, next) => {
   try {
-    const userPayload = req.body.userName !== undefined ?
-      { email: req.body.email, password: req.body.password, userName: req.body.userName }
-      : { email: req.body.email, password: req.body.password };
-
-    const signupSchema = {
-      properties: { ...userSchema.properties, userName: { type: "string" } },
-      required: [...userSchema.required, "userName"]
-    };
-
-    const requiredSchema = req.path === "/signup" ? signupSchema : userSchema;
-    if (validateSchema.validate(userPayload, requiredSchema).errors.length > 0) {
-      const errorMsg = validateSchema.validate(userPayload, requiredSchema).errors.map(err => err.stack);
-      throw CustomError(errorMsg?.toString(), 400);
+    if (validateSchema.validate(getPayload(req.path, req.body), getUserSchema(req.path)).errors.length > 0) {
+      const errorMsg = validateSchema.validate(getPayload(req.path, req.body), getUserSchema(req.path)).errors.map(err => err.stack);
+      throw validationError(errorMsg?.toString());
     }
     next();
   } catch (err) {
-    if (err.code !== 400) {
-      res.status(500).json({ msg: "something went wrong" });
-      return;
-    }
     console.error(err);
-    res.status(err?.code).json({ msg: err?.msg });
+    errorHandler(err.name, res, err.msg);
   }
 };

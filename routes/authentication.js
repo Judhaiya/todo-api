@@ -1,6 +1,7 @@
 const express = require("express");
 const { saveUserData, loginUser, deleteAccount } = require("../controllers/authentication");
 const { validateUserSchema } = require("../middlewares/validation");
+const { errorHandler } = require("../services/errors");
 
 const router = express.Router();
 
@@ -12,12 +13,8 @@ router.post("/signup", validateUserSchema, async (req, res) => {
       token
     });
   } catch (err) {
-    if (err.code !== 400) {
-      res.status(500).json({ msg: "something went wrong" });
-      return;
-    }
     console.error(err, "error");
-    res.status(err?.code).json({ msg: err?.msg });
+    errorHandler(err.name, res, err.msg);
   }
 });
 
@@ -29,12 +26,8 @@ router.post("/login", validateUserSchema, async (req, res) => {
       token: accessToken
     });
   } catch (err) {
-    if (err.code !== 400) {
-      res.status(500).json({ msg: "something went wrong" });
-      return;
-    }
     console.error(err, "error");
-    res.status(err?.code).json({ msg: err?.msg });
+    errorHandler(err.name, res, err.msg);
   }
 });
 
@@ -44,11 +37,7 @@ router.delete("/deleteUser", validateUserSchema, async (req, res) => {
     res.status(200).json({ msg: "Account has been successfully deleted" });
   } catch (err) {
     console.error(err, "error");
-    if (err.code !== 400) {
-      res.status(500).json({ msg: "something went wrong" });
-      return;
-    }
-    res.status(err?.code).json({ msg: err?.msg });
+    errorHandler(err.name, res, err.msg);
   }
 });
 
