@@ -3,16 +3,17 @@ const { generateToken, verifyToken } = require("../services/token");
 const { requestError } = require("../services/errors");
 const bcrypt = require("bcrypt");
 
-const existingUser = exports.existingUser = async function (userEmail) {
+exports.existingUser = async function (userEmail) {
   const existUserDetl = await UsersData.findOne({ email: userEmail });
   return existUserDetl;
 };
+const existingUser = exports.existingUser;
 
-const comparePassword = exports.comparePassword = async function (password, email) {
+exports.comparePassword = async function (password, email) {
   const userDetails = await exports.existingUser(email);
   return bcrypt.compare(password.toString(), userDetails.password);
 };
-
+const comparePassword = exports.comparePassword;
 exports.userSignup = async (userDetail) => {
   const { email, userName, password } = userDetail;
   if (existingUser(email)) {
