@@ -2,12 +2,12 @@ const chai = require("chai");
 const mongoose = require("mongoose");
 const { connectDB } = require("../../utils/databaseConnection");
 const { addUser, getUser, deleteUser } = require("../../services/mongodb/userFunctions");
-// mongo schema creation
 const expect = chai.expect;
+
 // read data from mongoose;
 // write data in mongoose;
-// update data in mongoose;
 // delete data in mongoose;
+
 const testUser = {
   userName: "livia",
   email: "livia12@gmail.com",
