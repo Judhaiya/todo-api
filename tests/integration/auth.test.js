@@ -1,7 +1,7 @@
 const chai = require("chai");
 const dotenv = require("dotenv");
 const chaiHttp = require("chai-http");
-const UsersData = require("../../services/mongodb/user");
+const { getUser } = require("../../services/mongodb/userFunctions");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { connectDB } = require("../../utils/databaseConnection");
@@ -52,7 +52,7 @@ const payloadDetails = [
   }
 ];
 
-function apiNegative(expectedUrl, expectedDetails) {
+function apiNegative(expectedUrl, expectedDetails, action) {
   expectedDetails.map(async (userDetail) => {
     const filterUserDetails = expectedDetails.filter(detail => detail.key !== userDetail.key);
     const correctDetails = filterUserDetails.reduce((prev, cur) => {
@@ -77,7 +77,7 @@ describe("sign api prep", () => {
     let regUserDetails;
     beforeEach(async () => {
       await connectDB();
-      regUserDetails = await UsersData.findOne({ email: userDetails.email });
+      regUserDetails = await getUser(userDetails.email);
       if (regUserDetails) {
         const res = await chai.request(`${process.env.SERVER_URL}`)
           .delete("/api/auth/deleteUser")
@@ -94,13 +94,14 @@ describe("sign api prep", () => {
       expect(res.body.msg).to.be.eql("User account has been created successfully");
       const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET);
       expect(userDetails.email).eql(jwtDetails.payload);
+      const regUserDetails = await getUser(userDetails.email);
       const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
         regUserDetails?.password);
       expect(isPasswordMatched).to.be.true;
     });
     it("should return 400 if invalid data is fed"
       , async () => {
-        apiNegative("/api/auth/signup", payloadDetails);
+        apiNegative("/api/auth/signup", payloadDetails, "post");
       }
     );
   });
@@ -114,22 +115,25 @@ describe("login-test-cases", () => {
         .post("/api/auth/signup")
         .send(userDetails);
       expect(res.statusCode).to.be.oneOf([200, 400]);
+      console.log(res.body.msg, "res.body");
       expect(res.body.msg).to.be.oneOf(["User email already exists",
         "User account has been created successfully"]);
     });
     it(`it should see whether the username already exists and
          respond with 200 if it is present`, async () => {
-      const findEmail = await UsersData.findOne({ email: userDetails.email });
+      const findEmail = await getUser(userDetails.email);
+      console.log(findEmail?.email, findEmail, "findEmail");
       expect(findEmail?.email).eql(userDetails?.email);
       const res = await chai.request(process.env.SERVER_URL)
         .post("/api/auth/login")
         .send(userDetails);
+      console.log(res.body, "res.body in login");
       expect(res.body.msg).to.be.eql("User logged in successfully");
       expect(res.statusCode).to.equal(200);
     });
 
     it("should return 400 if invalid data is fed", (done) => {
-      apiNegative("/api/auth/login", payloadDetails);
+      apiNegative("/api/auth/login", payloadDetails, "post");
       done();
     });
   });
@@ -157,6 +161,7 @@ describe("when delete operation is executed", () => {
       } else if (res.statusCode === 400) {
         expect(res.statusCode).to.equal(400);
         expect(res.body.msg).to.equal("User email already exists");
+        console.log("user email already exists in login before delete", res.body.msg);
         const tokenRes = await chai.request(process.env.SERVER_URL)
           .post("/api/auth/login")
           .send(userDetails);
@@ -195,8 +200,9 @@ describe("when delete operation is executed", () => {
           correctValue: token
         }
       ];
-      apiNegative("/api/auth/deleteUser", deleteDetails);
+      apiNegative("/api/auth/deleteUser", deleteDetails, "delete");
       done();
     });
   });
 });
+

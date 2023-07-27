@@ -7,5 +7,5 @@ exports.verifyToken = (accessToken) => {
 };
 
 exports.generateToken = (email) => {
-  return jwt.sign({ payload: email }, process.env.JWT_SECRET);
+  return jwt.sign({ payload: email, expiry: "2h" }, process.env.JWT_SECRET);
 };

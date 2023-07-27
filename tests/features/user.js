@@ -1,63 +1,127 @@
 const chai = require('chai');
 const { connectDB } = require("../../utils/databaseConnection");
-const { addUser, getUser, deleteUser, deleteUser } = require("../../services/mongodb/userFunctions");
-const bcrypt = require("bcrypt");
+const { userSignup, userLogin, deleteUserAccount } = require("../../features/user");
+const { verifyToken } = require("../../services/token");
 
 const expect = chai.expect;
 
 const testUser = {
-    email: "streaks16@gmail.com",
-    userName: "streaks",
-    password: "streaks123"
-}
+  email: "streaks16@gmail.com",
+  userName: "streaks",
+  password: "streaks123"
+};
 
-describe("sign up works perfectly", () => {
-    beforeEach(async () => {
-        await connectDB();
-    })
-    it("", async () => {
-        addUser(testUser);
-        const getSavedUser = await getUser(testUser.email);
-        expect({ email: testUser.email, userName: testUser.userName }).to.deep
-            .equal({ email: getSavedUser.email, userName: getSavedUser.userName });
+describe("sign up feature", () => {
+  beforeEach(async () => {
+    await connectDB();
+  })
+  it("return token if valid credentials are provided", async () => {
+    const token = await userSignup(testUser);
+    const validEmail = verifyToken(token).payload;
+    expect(validEmail).to.equal(testUser.email);
 
-    })
-
-})
-describe("login api", () => {
-    beforeEach(async () => {
-        await connectDB();
-    })
-    it("user email exists negative", async () => {
-
-        const getTestUserOne = await getUser("striti12@gmail.com");
-        expect(getTestUserOne).to.be.null;
-    })
-    it("user email exists positive", async () => {
-        const getTestUserTwo = await getUser(testUser.email);
-        expect({ email: getTestUserTwo.email, userName: getTestUserTwo.userName }).to.deep
-            .equal({ email: testUser.email, userName: testUser.userName });
-    })
-
-    it("password comparsion scenario", async () => {
-        const getUserDetails = await getUser(testUser.email);
-        const passwordMatchOne = bcrypt.compare(testUser.password.toString(), getUserDetails.password);
-        expect(passwordMatchOne).to.be.true
+    it("will throw error if created with existing email", async () => {
+      try {
+        await userSignup(testUser);
+      } catch (err) {
+        expect(err.code).to.equal(400);
+        expect(err.msg).to.equal("User email already exists");
+        expect(err.name).to.equal("request error");
+      }
     });
-    it("password comparsion scenario -negative", async () => {
-        const getUserDetails = await getUser(testUser.email);
-        const passwordMatchTwo = bcrypt.compare("flower", getUserDetails.password);
-        expect(passwordMatchTwo).to.be.false
-    });
-})
+  });
+});
+
+describe("login feature", () => {
+  beforeEach(async () => {
+    await connectDB();
+  })
+  it("fails if we try to login with unregistered email", async () => {
+    try {
+      await userLogin({ email: "iris12@gmail.com", password: testUser.password });
+    } catch (err) {
+      expect(err.code).to.equal(400);
+      expect(err.msg).to.equal("Invalid User email");
+      expect(err.name).to.equal("request error");
+    };
+  });
+  it("will succeed if we login with registered email", async () => {
+    const token = await userLogin({ email: testUser.email, password: testUser.password });
+    const validEmail = verifyToken(token).payload;
+    expect(validEmail).to.equal(testUser.email);
+  })
+
+  it("will fail if we enter wrong password", async () => {
+    try {
+      await userLogin({ email: testUser.email, password: "234567" });
+    } catch (err) {
+      expect(err.code).to.equal(400);
+      expect(err.msg).to.equal("Password doesn't match");
+      expect(err.name).to.equal("request error");
+    };
+  });
+
+  it("will succeed if we enter correct password", async () => {
+    const token = await userLogin({ email: testUser.email, password: testUser.password });
+    const validEmail = verifyToken(token).payload;
+    expect(validEmail).to.equal(testUser.email);
+  });
+});
 
 describe("delete api", () => {
-    beforeEach(async () => {
-        await connectDB();
-    })
-    it("delete if valid payload is provided", async () => {
-        const deleteUser = await deleteUser(testUser)
-        const getUserDetails = await getUser(testUser.email);
-        expect(getUserDetails).to.be.null;
-    })
-})
+  let token;
+  beforeEach(async () => {
+    await connectDB();
+    token = await userLogin({ email: testUser.email, password: testUser.password });
+  })
+  it("will delete user account if valid email is provided", async () => {
+    try {
+      const req = {
+        body: {
+          email: "iris12@gmail.com",
+          password: testUser.password
+        },
+        headers: {
+          authorization: `Bearer ${token}`
+        }
+      };
+      await deleteUserAccount(req);
+    } catch (err) {
+      expect(err.code).to.equal(400);
+      expect(err.msg).to.equal("Invalid User email");
+      expect(err.name).to.equal("request error");
+    }
+    try {
+      const req = {
+        body: {
+          email: testUser.email,
+          password: "234567"
+        },
+        headers: {
+          authorization: `Bearer ${token}`
+        }
+      };
+      await deleteUserAccount(req);
+    } catch (err) {
+      expect(err.code).to.equal(400);
+      expect(err.msg).to.equal("Password doesn't match");
+      expect(err.name).to.equal("request error");
+    }
+    try {
+      const req = {
+        body: {
+          email: testUser.email,
+          password: "234567"
+        },
+        headers: {
+          authorization: `Bearer ${token}`
+        }
+      };
+      await deleteUserAccount(req);
+    } catch (err) {
+      expect(err.code).to.equal(400);
+      expect(err.msg).to.equal("Password doesn't match");
+      expect(err.name).to.equal("request error");
+    }
+  });
+});

@@ -2,7 +2,7 @@ const UsersData = require("./user");
 
 exports.addUser = async (userPayload) => {
   const userDetail = new UsersData(userPayload);
-  await userDetail.save(userDetail);
+  await userDetail.save();
 };
 
 exports.getUser = async (email) => {

@@ -20,13 +20,13 @@ describe("if mongodb crud functions are tested ", () => {
   });
   it("insert data function should create record in the database", async () => {
     await addUser(testUser);
-    const userDetailsInDb = await getUser(testUser.email);
+   const userDetailsInDb = await getUser(testUser.email);
     expect({ email: userDetailsInDb.email, userName: userDetailsInDb.userName })
       .to.deep.equal({ email: testUser.email, userName: testUser.userName });
   });
   it("delete data function should delete user record in the database", async () => {
     await deleteUser(testUser.email);
-    const userDetailsInDb = await getUser();
+    const userDetailsInDb = await getUser(testUser.email);
     expect(userDetailsInDb).to.be.null;
   });
 });

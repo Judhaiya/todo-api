@@ -2,21 +2,18 @@ const UsersData = require("../services/mongodb/user");
 const { generateToken, verifyToken } = require("../services/token");
 const { requestError } = require("../services/errors");
 const bcrypt = require("bcrypt");
+const { getUser } = require("../services/mongodb/userFunctions");
 
-exports.existingUser = async function (userEmail) {
-  const existUserDetl = await UsersData.findOne({ email: userEmail });
-  return existUserDetl;
-};
-const existingUser = exports.existingUser;
+;
 
 exports.comparePassword = async function (password, email) {
-  const userDetails = await exports.existingUser(email);
-  return bcrypt.compare(password.toString(), userDetails.password);
+  const userDetails = await getUser(email);
+  return bcrypt.compare(password.toString(), userDetails?.password);
 };
 const comparePassword = exports.comparePassword;
 exports.userSignup = async (userDetail) => {
   const { email, userName, password } = userDetail;
-  if (existingUser(email)) {
+  if (await getUser(email)) {
     throw requestError("User email already exists");
   }
   await new UsersData({
@@ -30,10 +27,12 @@ exports.userSignup = async (userDetail) => {
 
 exports.userLogin = async function (userDetails) {
   const { email, password } = userDetails;
-  if (!existingUser(email)) {
+  const existingUser = await getUser(email);
+  console.log(existingUser, "extinguser");
+  if (!existingUser) {
     throw requestError("Invalid User email");
   }
-  if (!comparePassword(password, email)) {
+  if (!await comparePassword(password, email)) {
     throw requestError("Password doesn't match");
   }
   const accessToken = generateToken(email);
@@ -42,15 +41,18 @@ exports.userLogin = async function (userDetails) {
 
 exports.deleteUserAccount = async function (req) {
   const { email, password } = req.body;
-  const requiredToken = req?.headers?.authorization.split(" ")[1];
-  if (!existingUser(email)) {
+  const requiredToken = req?.headers?.authorization?.split(" ")[1];
+  console.log("delete api call feature function");
+  const userDetails = await getUser(email);
+  if (!userDetails) {
     throw requestError("Invalid User email");
   }
   if (!comparePassword(password, email)) {
+    console.log(!comparePassword(password, email), "compare password");
     throw requestError("Password doesn't match");
   }
-  const isJwtVerified = verifyToken(requiredToken);
-  if (!isJwtVerified) {
+  const jwtVerifiedPayload = verifyToken(requiredToken);
+  if (!jwtVerifiedPayload) {
     throw requestError("Token is invalid");
   }
   await UsersData.deleteOne({ email });

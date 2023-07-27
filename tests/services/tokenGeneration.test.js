@@ -1,6 +1,5 @@
 const { verifyToken, generateToken } = require("../../services/token");
 const chai = require("chai");
-
 const expect = chai.expect;
 
 const userEmail = "levia14@gmail.com";
