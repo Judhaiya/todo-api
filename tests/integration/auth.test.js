@@ -1,10 +1,10 @@
 const chai = require("chai");
 const dotenv = require("dotenv");
 const chaiHttp = require("chai-http");
-const UsersData = require("../services/mongodb/user");
+const UsersData = require("../../services/mongodb/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { connectDB } = require("../utils/databaseConnection");
+const { connectDB } = require("../../utils/databaseConnection");
 
 dotenv.config();
 chai.use(chaiHttp);

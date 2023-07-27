@@ -1,5 +1,4 @@
 const chai = require("chai");
-const mongoose = require("mongoose");
 const { connectDB } = require("../../utils/databaseConnection");
 const { addUser, getUser, deleteUser } = require("../../services/mongodb/userFunctions");
 const expect = chai.expect;
