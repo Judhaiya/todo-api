@@ -2,7 +2,7 @@ const UsersData = require("../services/mongodb/user");
 const { generateToken, verifyToken } = require("../services/token");
 const { requestError } = require("../services/errors");
 const bcrypt = require("bcrypt");
-const { getUser } = require("../services/mongodb/userFunctions");
+const { getUser, deleteUser } = require("../services/mongodb/userFunctions");
 
 ;
 
@@ -28,7 +28,6 @@ exports.userSignup = async (userDetail) => {
 exports.userLogin = async function (userDetails) {
   const { email, password } = userDetails;
   const existingUser = await getUser(email);
-  console.log(existingUser, "extinguser");
   if (!existingUser) {
     throw requestError("Invalid User email");
   }
@@ -55,5 +54,5 @@ exports.deleteUserAccount = async function (req) {
   if (!jwtVerifiedPayload) {
     throw requestError("Token is invalid");
   }
-  await UsersData.deleteOne({ email });
+  await deleteUser(email);
 };
