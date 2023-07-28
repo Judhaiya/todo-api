@@ -1,6 +1,7 @@
 const chai = require("chai");
 const { connectDB } = require("../../utils/databaseConnection");
-const { addUser, getUser, deleteUser } = require("../../services/mongodb/userFunctions");
+const { addCollection, readCollection, deleteCollection } = require("../../services/mongodb/actionFunctions");
+const UsersData = require("../../services/mongodb/user");
 const expect = chai.expect;
 
 // read data from mongoose;
@@ -9,7 +10,7 @@ const expect = chai.expect;
 
 const testUser = {
   userName: "livia",
-  email: "livia12@gmail.com",
+  email: "livia16@gmail.com",
   password: "livia1234"
 };
 
@@ -19,14 +20,14 @@ describe("if mongodb crud functions are tested ", () => {
     await connectDB();
   });
   it("insert data function should create record in the database", async () => {
-    await addUser(testUser);
-   const userDetailsInDb = await getUser(testUser.email);
+    await addCollection(UsersData, testUser);
+    const userDetailsInDb = await readCollection(UsersData, { email: testUser.email });
     expect({ email: userDetailsInDb.email, userName: userDetailsInDb.userName })
       .to.deep.equal({ email: testUser.email, userName: testUser.userName });
   });
   it("delete data function should delete user record in the database", async () => {
-    await deleteUser(testUser.email);
-    const userDetailsInDb = await getUser(testUser.email);
+    await deleteCollection(UsersData, { email: testUser.email });
+    const userDetailsInDb = await readCollection(UsersData, { email: testUser.email });
     expect(userDetailsInDb).to.be.null;
   });
 });

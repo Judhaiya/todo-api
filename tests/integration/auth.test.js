@@ -52,7 +52,7 @@ const payloadDetails = [
   }
 ];
 
-function apiNegative(expectedUrl, expectedDetails, action) {
+async function apiNegative(expectedUrl, expectedDetails, action) {
   expectedDetails.map(async (userDetail) => {
     const filterUserDetails = expectedDetails.filter(detail => detail.key !== userDetail.key);
     const correctDetails = filterUserDetails.reduce((prev, cur) => {
@@ -101,7 +101,7 @@ describe("sign api prep", () => {
     });
     it("should return 400 if invalid data is fed"
       , async () => {
-        apiNegative("/api/auth/signup", payloadDetails, "post");
+        await apiNegative("/api/auth/signup", payloadDetails, "post");
       }
     );
   });
@@ -132,9 +132,8 @@ describe("login-test-cases", () => {
       expect(res.statusCode).to.equal(200);
     });
 
-    it("should return 400 if invalid data is fed", (done) => {
-      apiNegative("/api/auth/login", payloadDetails, "post");
-      done();
+    it("should return 400 if invalid data is fed", async () => {
+      await apiNegative("/api/auth/login", payloadDetails, "post");
     });
   });
 });
@@ -182,7 +181,7 @@ describe("when delete operation is executed", () => {
         expect(res.body.msg).to.equal("Account has been successfully deleted");
         // token
       });
-    it("should return 400 if invalid data is fed", (done) => {
+    it("should return 400 if invalid data is fed", async () => {
       const deleteDetails = [
         {
           key: "email",
@@ -200,8 +199,7 @@ describe("when delete operation is executed", () => {
           correctValue: token
         }
       ];
-      apiNegative("/api/auth/deleteUser", deleteDetails, "delete");
-      done();
+      await apiNegative("/api/auth/deleteUser", deleteDetails, "delete");
     });
   });
 });

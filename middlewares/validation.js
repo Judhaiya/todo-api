@@ -27,22 +27,11 @@ const getUserSchema = (path) => {
   };
   return requiredSchema;
 };
-const getPayload = (path, payloadDetails) => {
-  let requiredPayload;
-  switch (path) {
-    case "/signup":
-      requiredPayload = { email: payloadDetails.email, password: payloadDetails.password, userName: payloadDetails.userName };
-      break;
-    default:
-      requiredPayload = { email: payloadDetails.email, password: payloadDetails.password };
-  }
-  return requiredPayload;
-};
 
 exports.validateUserSchema = async (req, res, next) => {
   try {
-    if (validateSchema.validate(getPayload(req.path, req.body), getUserSchema(req.path)).errors.length > 0) {
-      const errorMsg = validateSchema.validate(getPayload(req.path, req.body), getUserSchema(req.path)).errors.map(err => err.stack);
+    if (validateSchema.validate(req.body, getUserSchema(req.path)).errors.length > 0) {
+      const errorMsg = validateSchema.validate(req.body, getUserSchema(req.path)).errors.map(err => err.stack);
       throw validationError(errorMsg?.toString());
     }
     next();

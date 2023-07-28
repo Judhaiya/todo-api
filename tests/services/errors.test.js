@@ -6,14 +6,27 @@ const expect = chai.expect;
 // testing request error function
 describe("testing custom error function", () => {
   it("request error function works as expected if", () => {
-    expect(requestError("Invalid email").name).to.equal("request error");
-    expect(requestError("Invalid email").msg).to.equal("Invalid email");
-    expect(requestError("Invalid email").code).to.equal(400);
+    const errorObject = requestError("Invalid email");
+    const expectedResults = {
+      name: "request error",
+      msg: "Invalid email",
+      code: 400
+    };
+    for (const key in expectedResults) {
+      expect(errorObject[key]).to.equal(expectedResults[key]);
+    }
   });
+
   // testing validation error function
   it("validation error function works as expected if", () => {
-    expect(validationError("email format is wrong").name).to.equal("request error");
-    expect(validationError("Invalid email").msg).to.equal("Invalid email");
-    expect(validationError("Invalid email").code).to.equal(400);
+    const errorObject = validationError("email format is wrong");
+    const expectedResults = {
+      name: "validation error",
+      msg: "email format is wrong",
+      code: 400
+    };
+    for (const key in expectedResults) {
+      expect(errorObject[key]).to.equal(expectedResults[key]);
+    }
   });
 });
