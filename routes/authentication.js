@@ -30,7 +30,6 @@ router.post("/login", validateUserSchema, async (req, res) => {
     errorHandler(err.name, res, err.msg);
   }
 });
-
 router.delete("/deleteUser", validateUserSchema, async (req, res) => {
   try {
     await deleteAccount(req);

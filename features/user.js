@@ -41,7 +41,6 @@ exports.userLogin = async function (userDetails) {
 exports.deleteUserAccount = async function (req) {
   const { email, password } = req.body;
   const requiredToken = req?.headers?.authorization?.split(" ")[1];
-  console.log("delete api call feature function");
   const userDetails = await getUser(email);
   if (!userDetails) {
     throw requestError("Invalid User email");
@@ -50,9 +49,8 @@ exports.deleteUserAccount = async function (req) {
     console.log(!comparePassword(password, email), "compare password");
     throw requestError("Password doesn't match");
   }
-  const jwtVerifiedPayload = verifyToken(requiredToken);
-  if (!jwtVerifiedPayload) {
-    throw requestError("Token is invalid");
+  if (verifyToken(requiredToken).payload !== userDetails.email) {
+    throw requestError("invalid token");
   }
   await deleteUser(email);
 };

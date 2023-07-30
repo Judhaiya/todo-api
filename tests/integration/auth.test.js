@@ -53,23 +53,23 @@ const payloadDetails = [
 ];
 
 async function apiNegative(expectedUrl, expectedDetails, action) {
-  expectedDetails.map(async (userDetail) => {
+  for (const userDetail of expectedDetails) {
     const filterUserDetails = expectedDetails.filter(detail => detail.key !== userDetail.key);
     const correctDetails = filterUserDetails.reduce((prev, cur) => {
       return Object.assign(prev, { [cur.key]: cur.correctValue });
     }, {});
-    userDetail?.wrongValues.map(async (wrongValue) => {
+    for (const wrongValue of userDetail.wrongValues) {
       const res = await chai.request(process.env.SERVER_URL)
         .post(expectedUrl)
         .send({ correctDetails, [userDetail.key]: wrongValue });
 
       expect(res.statusCode).to.equal(400);
-    });
+    }
     const res = await chai.request(process.env.SERVER_URL)
       .post(expectedUrl)
       .send(correctDetails);
     expect(res.statusCode).to.equal(400);
-  });
+  }
 }
 
 describe("sign api prep", () => {

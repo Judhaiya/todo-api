@@ -18,6 +18,20 @@ describe("sign up feature", () => {
     await connectDB();
   });
   it("return token if valid credentials are provided", async () => {
+    const savedUserDetails = await readCollection(UsersData, { email: testUser.email });
+    if (savedUserDetails) {
+      const token = await userLogin({ email: testUser.email, password: testUser.password });
+      const req = {
+        body: {
+          email: testUser.email,
+          password: testUser.password
+        },
+        headers: {
+          authorization: `Bearer ${token}`
+        }
+      };
+      await deleteUserAccount(req);
+    }
     const token = await userSignup(testUser);
     const validEmail = verifyToken(token).payload;
     expect(validEmail).to.equal(testUser.email);
@@ -26,7 +40,7 @@ describe("sign up feature", () => {
     const savedUserDetails = await readCollection(UsersData, { email: testUser.email });
     expect({ email: savedUserDetails.email, userName: savedUserDetails.userName })
       .to.deep.equal({ email: testUser.email, userName: testUser.userName });
-    });
+  });
   it("will throw error if created with existing email", async () => {
     try {
       await userSignup(testUser);
@@ -41,7 +55,7 @@ describe("sign up feature", () => {
 describe("login feature", () => {
   beforeEach(async () => {
     await connectDB();
-  })
+  });
   it("fails if we try to login with unregistered email", async () => {
     try {
       await userLogin({ email: "iris12@gmail.com", password: testUser.password });
@@ -55,8 +69,7 @@ describe("login feature", () => {
     const token = await userLogin({ email: testUser.email, password: testUser.password });
     const validEmail = verifyToken(token).payload;
     expect(validEmail).to.equal(testUser.email);
-  })
-
+  });
   it("will fail if we enter wrong password", async () => {
     try {
       await userLogin({ email: testUser.email, password: "234567" });
@@ -72,9 +85,23 @@ describe("delete api", () => {
   let token;
   beforeEach(async () => {
     await connectDB();
-    token = await userSignup({ email: testUser.email, password: testUser.password });
-  })
-  it("will delete user account if valid email is provided", async () => {
+    const savedUserDetails = await readCollection(UsersData, { email: testUser.email });
+    if (savedUserDetails) {
+      const token = await userLogin({ email: testUser.email, password: testUser.password });
+      const req = {
+        body: {
+          email: testUser.email,
+          password: testUser.password
+        },
+        headers: {
+          authorization: `Bearer ${token}`
+        }
+      };
+      await deleteUserAccount(req);
+    }
+    token = await userSignup(testUser);
+  });
+  it("will not delete user account if invalid email is provided", async () => {
     try {
       const req = {
         body: {
@@ -91,6 +118,8 @@ describe("delete api", () => {
       expect(err.msg).to.equal("Invalid User email");
       expect(err.name).to.equal("request error");
     }
+  });
+  it("will not delete user account if wrong password is provided", async () => {
     try {
       const req = {
         body: {
@@ -107,5 +136,37 @@ describe("delete api", () => {
       expect(err.msg).to.equal("Password doesn't match");
       expect(err.name).to.equal("request error");
     }
+  });
+  it("will not delete user account if invalid token is provided", async () => {
+    try {
+      const req = {
+        body: {
+          email: testUser.email,
+          password: testUser.password
+        },
+        headers: {
+          authorization: "1234"
+        }
+      };
+      await deleteUserAccount(req);
+    } catch (err) {
+      expect(err.code).to.equal(400);
+      expect(err.msg).to.equal("invalid token");
+      expect(err.name).to.equal("request error");
+    }
+  });
+  it("will delete user account if valid credentials and token is provided", async () => {
+    const req = {
+      body: {
+        email: testUser.email,
+        password: testUser.password
+      },
+      headers: {
+        authorization: `Bearer ${token}`
+      }
+    };
+    await deleteUserAccount(req);
+    const userDetails = await readCollection(UsersData, { email: testUser.email });
+    expect(userDetails).to.be.null
   });
 });

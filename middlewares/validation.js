@@ -4,28 +4,44 @@ const { validationError, errorHandler } = require("../services/errors");
 const validateSchema = new Validator();
 
 const getUserSchema = (path) => {
-  let requiredSchema;
-  switch (path) {
-    case "/signup":
-      requiredSchema = {
-        properties: {
-          email: { type: "string", format: "email" },
-          password: { type: "string", minLength: 6, maxLength: 6 },
-          userName: { type: "string" }
-        },
-        required: ["email", "password", "userName"]
-      };
-      break;
-    default:
-      requiredSchema = {
-        properties: {
-          email: { type: "string", format: "email" },
-          password: { type: "string", minLength: 6, maxLength: 6 }
-        },
-        required: ["email", "password"]
-      };
-  };
-  return requiredSchema;
+  try {
+    let requiredSchema;
+    switch (path) {
+      case "/signup":
+        requiredSchema = {
+          properties: {
+            email: { type: "string", format: "email" },
+            password: { type: "string", minLength: 6, maxLength: 6 },
+            userName: { type: "string" }
+          },
+          required: ["email", "password", "userName"]
+        };
+        break;
+      case "/login":
+        requiredSchema = {
+          properties: {
+            email: { type: "string", format: "email" },
+            password: { type: "string", minLength: 6, maxLength: 6 }
+          },
+          required: ["email", "password"]
+        };
+        break;
+      case "/deleteUser":
+        requiredSchema = {
+          properties: {
+            email: { type: "string", format: "email" },
+            password: { type: "string", minLength: 6, maxLength: 6 }
+          },
+          required: ["email", "password"]
+        };
+        break;
+      default:
+        throw new Error(`${path} is invalid path`);
+    };
+    return requiredSchema;
+  } catch (err) {
+    console.log(err, "invalid path");
+  }
 };
 
 exports.validateUserSchema = async (req, res, next) => {
