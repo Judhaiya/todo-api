@@ -2,32 +2,30 @@ const UsersData = require("../services/mongodb/user");
 const { generateToken, verifyToken } = require("../services/token");
 const { requestError } = require("../services/errors");
 const bcrypt = require("bcrypt");
-const { getUser, deleteUser } = require("../services/mongodb/userFunctions");
-
-;
+const { addCollection, readCollection, deleteCollection } = require("../services/mongodb/actionFunctions");
 
 exports.comparePassword = async function (password, email) {
-  const userDetails = await getUser(email);
+  const userDetails = await readCollection(UsersData, { email });
   return bcrypt.compare(password.toString(), userDetails?.password);
 };
 const comparePassword = exports.comparePassword;
 exports.userSignup = async (userDetail) => {
   const { email, userName, password } = userDetail;
-  if (await getUser(email)) {
+  if (await readCollection(UsersData, { email })) {
     throw requestError("User email already exists");
   }
-  await new UsersData({
+  await addCollection(UsersData, {
     email,
     userName,
     password
-  }).save();
+  });
   const accessToken = generateToken(email);
   return accessToken;
 };
 
 exports.userLogin = async function (userDetails) {
   const { email, password } = userDetails;
-  const existingUser = await getUser(email);
+  const existingUser = await readCollection(UsersData, { email });
   if (!existingUser) {
     throw requestError("Invalid User email");
   }
@@ -41,7 +39,7 @@ exports.userLogin = async function (userDetails) {
 exports.deleteUserAccount = async function (req) {
   const { email, password } = req.body;
   const requiredToken = req?.headers?.authorization?.split(" ")[1];
-  const userDetails = await getUser(email);
+  const userDetails = await readCollection(UsersData, { email });
   if (!userDetails) {
     throw requestError("Invalid User email");
   }
@@ -51,5 +49,5 @@ exports.deleteUserAccount = async function (req) {
   if (verifyToken(requiredToken).payload !== userDetails.email) {
     throw requestError("invalid token");
   }
-  await deleteUser(email);
+  await deleteCollection(UsersData, { email });
 };
