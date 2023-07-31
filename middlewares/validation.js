@@ -40,7 +40,7 @@ const getUserSchema = (path) => {
     };
     return requiredSchema;
   } catch (err) {
-    console.log(err, "invalid path");
+    console.error(err, "invalid path");
   }
 };
 
