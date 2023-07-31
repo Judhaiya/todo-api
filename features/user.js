@@ -46,7 +46,6 @@ exports.deleteUserAccount = async function (req) {
     throw requestError("Invalid User email");
   }
   if (!comparePassword(password, email)) {
-    console.log(!comparePassword(password, email), "compare password");
     throw requestError("Password doesn't match");
   }
   if (verifyToken(requiredToken).payload !== userDetails.email) {

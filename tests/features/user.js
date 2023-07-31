@@ -12,26 +12,28 @@ const testUser = {
   userName: "streaks",
   password: "streaks123"
 };
-
+const readAndDeleteData = async () => {
+  const savedUserDetails = await readCollection(UsersData, { email: testUser.email });
+  if (savedUserDetails) {
+    const token = await userLogin({ email: testUser.email, password: testUser.password });
+    const req = {
+      body: {
+        email: testUser.email,
+        password: testUser.password
+      },
+      headers: {
+        authorization: `Bearer ${token}`
+      }
+    };
+    await deleteUserAccount(req);
+  }
+}
 describe("sign up feature", () => {
   beforeEach(async () => {
     await connectDB();
   });
   it("return token if valid credentials are provided", async () => {
-    const savedUserDetails = await readCollection(UsersData, { email: testUser.email });
-    if (savedUserDetails) {
-      const token = await userLogin({ email: testUser.email, password: testUser.password });
-      const req = {
-        body: {
-          email: testUser.email,
-          password: testUser.password
-        },
-        headers: {
-          authorization: `Bearer ${token}`
-        }
-      };
-      await deleteUserAccount(req);
-    }
+    await readAndDeleteData();
     const token = await userSignup(testUser);
     const validEmail = verifyToken(token).payload;
     expect(validEmail).to.equal(testUser.email);
@@ -85,20 +87,7 @@ describe("delete api", () => {
   let token;
   beforeEach(async () => {
     await connectDB();
-    const savedUserDetails = await readCollection(UsersData, { email: testUser.email });
-    if (savedUserDetails) {
-      const token = await userLogin({ email: testUser.email, password: testUser.password });
-      const req = {
-        body: {
-          email: testUser.email,
-          password: testUser.password
-        },
-        headers: {
-          authorization: `Bearer ${token}`
-        }
-      };
-      await deleteUserAccount(req);
-    }
+    await readAndDeleteData();
     token = await userSignup(testUser);
   });
   it("will not delete user account if invalid email is provided", async () => {
