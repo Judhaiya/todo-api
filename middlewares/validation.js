@@ -11,7 +11,7 @@ const getUserSchema = (path) => {
         requiredSchema = {
           properties: {
             email: { type: "string", format: "email" },
-            password: { type: "string", minLength: 6, maxLength: 6 },
+            password: { type: "string", minLength: 6, maxLength: 12 },
             userName: { type: "string" }
           },
           required: ["email", "password", "userName"]
@@ -21,7 +21,7 @@ const getUserSchema = (path) => {
         requiredSchema = {
           properties: {
             email: { type: "string", format: "email" },
-            password: { type: "string", minLength: 6, maxLength: 6 }
+            password: { type: "string", minLength: 6, maxLength: 12 }
           },
           required: ["email", "password"]
         };
@@ -30,7 +30,7 @@ const getUserSchema = (path) => {
         requiredSchema = {
           properties: {
             email: { type: "string", format: "email" },
-            password: { type: "string", minLength: 6, maxLength: 6 }
+            password: { type: "string", minLength: 6, maxLength: 12 }
           },
           required: ["email", "password"]
         };

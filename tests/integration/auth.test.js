@@ -137,9 +137,9 @@ describe("sign api prep", () => {
       expect(res.body.msg).to.be.eql("User account has been created successfully");
       const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET);
       expect(userDetails.email).eql(jwtDetails.payload);
-      const regUserDetails = await readCollection(UsersData, { email: userDetails.email });
+      const registeredUserData = await readCollection(UsersData, { email: userDetails.email });
       const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
-        regUserDetails?.password);
+        registeredUserData?.password);
       expect(isPasswordMatched).to.be.true;
     });
     it("should return 400 if invalid data is fed"
@@ -155,7 +155,7 @@ describe("sign api prep", () => {
   });
 });
 
-describe("login-test-cases", () => {
+describe("login test cases", () => {
   describe("when login is called", () => {
     before(async () => {
       await connectDB();
@@ -255,4 +255,3 @@ describe("when delete operation is executed", () => {
     });
   });
 });
-

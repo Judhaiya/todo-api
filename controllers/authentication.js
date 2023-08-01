@@ -11,5 +11,5 @@ exports.loginUser = async (userDetails) => {
 };
 
 exports.deleteAccount = async (req) => {
-  deleteUserAccount(req);
+  await deleteUserAccount(req);
 };

@@ -5,8 +5,13 @@ const bcrypt = require("bcrypt");
 const { addCollection, readCollection, deleteCollection } = require("../services/mongodb/actionFunctions");
 
 exports.comparePassword = async function (password, email) {
-  const userDetails = await readCollection(UsersData, { email });
-  return bcrypt.compare(password.toString(), userDetails?.password);
+  try {
+    const userDetails = await readCollection(UsersData, { email });
+    return bcrypt.compare(password.toString(), userDetails?.password);
+  } catch (err) {
+    console.error("comapre password error", err);
+    throw requestError("no valid password found");
+  };
 };
 const comparePassword = exports.comparePassword;
 exports.userSignup = async (userDetail) => {
@@ -14,7 +19,7 @@ exports.userSignup = async (userDetail) => {
   if (await readCollection(UsersData, { email })) {
     throw requestError("User email already exists");
   }
-  await addCollection(UsersData, {
+  await addCollection("users", {
     email,
     userName,
     password
@@ -43,7 +48,7 @@ exports.deleteUserAccount = async function (req) {
   if (!userDetails) {
     throw requestError("Invalid User email");
   }
-  if (!comparePassword(password, email)) {
+  if (!await comparePassword(password, email)) {
     throw requestError("Password doesn't match");
   }
   if (verifyToken(requiredToken).payload !== userDetails.email) {

@@ -27,7 +27,7 @@ router.post("/login", validateUserSchema, async (req, res) => {
     });
   } catch (err) {
     console.error(err, "error");
-    errorHandler(err.name, res, err.msg);
+    errorHandler(err, res);
   }
 });
 router.delete("/deleteUser", validateUserSchema, async (req, res) => {
@@ -36,7 +36,7 @@ router.delete("/deleteUser", validateUserSchema, async (req, res) => {
     res.status(200).json({ msg: "Account has been successfully deleted" });
   } catch (err) {
     console.error(err, "error");
-    errorHandler(err.name, res, err.msg);
+    errorHandler(err, res);
   }
 });
 

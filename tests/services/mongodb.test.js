@@ -20,7 +20,7 @@ describe("if mongodb crud functions are tested ", () => {
     await connectDB();
   });
   it("insert data function should create record in the database", async () => {
-    await addCollection(UsersData, testUser);
+    await addCollection("users", testUser);
     const userDetailsInDb = await readCollection(UsersData, { email: testUser.email });
     expect({ email: userDetailsInDb.email, userName: userDetailsInDb.userName })
       .to.deep.equal({ email: testUser.email, userName: testUser.userName });

@@ -13,8 +13,9 @@ exports.requestError = (msg) => {
   return error;
 };
 
-exports.errorHandler = (errName, res, msg) => {
-  switch (errName) {
+exports.errorHandler = (err, res) => {
+  const { name, msg } = err;
+  switch (name) {
     case "validation error":
       res.status(400).json({ msg });
       break;

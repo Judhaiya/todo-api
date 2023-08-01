@@ -1,5 +1,11 @@
-exports.addCollection = async (Collection, payload) => {
-  const collectionDetails = new Collection(payload);
+const UsersData = require("./user");
+
+const collectionGroup = {
+  users: UsersData
+};
+
+exports.addCollection = async (name, payload) => {
+  const collectionDetails = new collectionGroup[`${name}`](payload);
   await collectionDetails.save();
 };
 
