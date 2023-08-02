@@ -252,14 +252,17 @@ describe("when delete operation is executed", () => {
       await apiNegative(negativePayload);
     });
     afterEach(async () => {
-      const res = await chai.request(baseUrl.local.SERVER_URL)
-        .delete("/api/auth/deleteUser")
-        .set({ Authorization: `Bearer ${token}` })
-        .send({
-          email: userDetails.email,
-          password: userDetails.password
-        });
-      expect(res.status).to.equal(200);
+      const userExists = await readCollection("users", { email: "BrandonFlynn12@gmail.com" });
+      if (userExists) {
+        const res = await chai.request(baseUrl.local.SERVER_URL)
+          .delete("/api/auth/deleteUser")
+          .set({ Authorization: `Bearer ${token}` })
+          .send({
+            email: userDetails.email,
+            password: userDetails.password
+          });
+        expect(res.status).to.equal(200);
+      };
     });
   });
 });
