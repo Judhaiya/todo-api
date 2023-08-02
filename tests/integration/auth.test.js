@@ -2,10 +2,10 @@ const chai = require("chai");
 const dotenv = require("dotenv");
 const chaiHttp = require("chai-http");
 const { readCollection } = require("../../services/mongodb/actionFunctions");
-const UsersData = require("../../services/mongodb/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { connectDB } = require("../../utils/databaseConnection");
+const { baseUrl } = require("../../utils/baseUrl");
 
 dotenv.config();
 chai.use(chaiHttp);
@@ -62,20 +62,20 @@ async function apiNegative(negativePayload) {
     }, {});
     for (const wrongValue of userDetail.wrongValues) {
       if (route === "signup") {
-        const res = await chai.request(process.env.SERVER_URL)
+        const res = await chai.request(baseUrl.local.SERVER_URL)
           .post(url)
           .send({ correctDetails, [userDetail.key]: wrongValue });
         expect(res.statusCode).to.equal(400);
         return;
       } else if (route === "login") {
-        const res = await chai.request(process.env.SERVER_URL)
+        const res = await chai.request(baseUrl.local.SERVER_URL)
           .post(url)
           .send({ correctDetails, [userDetail.key]: wrongValue });
         expect(res.statusCode).to.equal(400);
         return;
       } else if (route === "deleteUser") {
         if (userDetail.key === "token") {
-          const res = await chai.request(process.env.SERVER_URL)
+          const res = await chai.request(baseUrl.local.SERVER_URL)
             .delete(url)
             .send({ correctDetails })
             .set({ Authorization: wrongValue });
@@ -83,7 +83,7 @@ async function apiNegative(negativePayload) {
           return;
         }
         const { token, ...rest } = correctDetails;
-        const res = await chai.request(process.env.SERVER_URL)
+        const res = await chai.request(baseUrl.local.SERVER_URL)
           .delete(url)
           .send({ rest, [userDetail.key]: wrongValue })
           .set({ Authorization: `Bearer ${token}` });
@@ -93,19 +93,19 @@ async function apiNegative(negativePayload) {
     if (route === "deleteUser") {
       if (userDetail.key !== "token") {
         const { token, ...rest } = correctDetails;
-        const res = await chai.request(process.env.SERVER_URL)
+        const res = await chai.request(baseUrl.local.SERVER_URL)
           .delete(url)
           .send(rest)
           .set({ Authorization: `Bearer ${rest}` });
         expect(res.statusCode).to.equal(400);
       };
-      const res = await chai.request(process.env.SERVER_URL)
+      const res = await chai.request(baseUrl.local.SERVER_URL)
         .delete(url)
         .send(correctDetails);
       expect(res.statusCode).to.equal(400);
       return;
     };
-    const res = await chai.request(process.env.SERVER_URL)
+    const res = await chai.request(baseUrl.local.SERVER_URL)
       .post(url)
       .send(correctDetails);
     expect(res.statusCode).to.equal(400);
@@ -117,12 +117,12 @@ describe("sign api prep", () => {
   describe("when signup is called", () => {
     before(async () => {
       await connectDB();
-      const existingUser = await readCollection(UsersData, { email: userDetails.email });
+      const existingUser = await readCollection("users", { email: userDetails.email });
       if (existingUser) {
-        const loginResponse = await chai.request(process.env.SERVER_URL)
+        const loginResponse = await chai.request(baseUrl.local.SERVER_URL)
           .post("/api/auth/login")
           .send(userDetails);
-        const res = await chai.request(`${process.env.SERVER_URL}`)
+        const res = await chai.request(baseUrl.local.SERVER_URL)
           .delete("/api/auth/deleteUser")
           .set({ Authorization: `Bearer ${loginResponse.body.token}` })
           .send(userDetails);
@@ -130,14 +130,14 @@ describe("sign api prep", () => {
       }
     });
     it("does the api process registration correctly", async () => {
-      const res = await chai.request(process.env.SERVER_URL)
+      const res = await chai.request(baseUrl.local.SERVER_URL)
         .post("/api/auth/signup")
         .send(userDetails);
       expect(res.status).to.equal(200);
       expect(res.body.msg).to.be.eql("User account has been created successfully");
       const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET);
       expect(userDetails.email).eql(jwtDetails.payload);
-      const registeredUserData = await readCollection(UsersData, { email: userDetails.email });
+      const registeredUserData = await readCollection("users", { email: userDetails.email });
       const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
         registeredUserData?.password);
       expect(isPasswordMatched).to.be.true;
@@ -159,7 +159,7 @@ describe("login test cases", () => {
   describe("when login is called", () => {
     before(async () => {
       await connectDB();
-      const res = await chai.request(process.env.SERVER_URL)
+      const res = await chai.request(baseUrl.local.SERVER_URL)
         .post("/api/auth/signup")
         .send(userDetails);
       expect(res.statusCode).to.be.oneOf([200, 400]);
@@ -168,9 +168,9 @@ describe("login test cases", () => {
     });
     it(`it should see whether the username already exists and
          respond with 200 if it is present`, async () => {
-      const findEmail = await readCollection(UsersData, { email: userDetails.email });
+      const findEmail = await readCollection("users", { email: userDetails.email });
       expect(findEmail?.email).eql(userDetails?.email);
-      const res = await chai.request(process.env.SERVER_URL)
+      const res = await chai.request(baseUrl.local.SERVER_URL)
         .post("/api/auth/login")
         .send(userDetails);
       expect(res.body.msg).to.be.eql("User logged in successfully");
@@ -198,7 +198,7 @@ describe("when delete operation is executed", () => {
     let token;
     before(async () => {
       await connectDB();
-      const res = await chai.request(process.env.SERVER_URL)
+      const res = await chai.request(baseUrl.local.SERVER_URL)
         .post("/api/auth/signup")
         .send(userDetails);
       if (res.statusCode === 200) {
@@ -209,7 +209,7 @@ describe("when delete operation is executed", () => {
       } else if (res.statusCode === 400) {
         expect(res.statusCode).to.equal(400);
         expect(res.body.msg).to.equal("User email already exists");
-        const tokenRes = await chai.request(process.env.SERVER_URL)
+        const tokenRes = await chai.request(baseUrl.local.SERVER_URL)
           .post("/api/auth/login")
           .send(userDetails);
         token = tokenRes.body.token;
@@ -218,7 +218,7 @@ describe("when delete operation is executed", () => {
     });
     it("respond with status code 200 when email, password,token is passed",
       async () => {
-        const res = await chai.request(process.env.SERVER_URL)
+        const res = await chai.request(baseUrl.local.SERVER_URL)
           .delete("/api/auth/deleteUser")
           .set({ Authorization: `Bearer ${token}` })
           .send({

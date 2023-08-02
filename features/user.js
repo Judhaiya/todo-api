@@ -1,4 +1,3 @@
-const UsersData = require("../services/mongodb/user");
 const { generateToken, verifyToken } = require("../services/token");
 const { requestError } = require("../services/errors");
 const bcrypt = require("bcrypt");
@@ -6,7 +5,7 @@ const { addCollection, readCollection, deleteCollection } = require("../services
 
 exports.comparePassword = async function (password, email) {
   try {
-    const userDetails = await readCollection(UsersData, { email });
+    const userDetails = await readCollection("users", { email });
     return bcrypt.compare(password.toString(), userDetails?.password);
   } catch (err) {
     console.error("comapre password error", err);
@@ -16,7 +15,7 @@ exports.comparePassword = async function (password, email) {
 const comparePassword = exports.comparePassword;
 exports.userSignup = async (userDetail) => {
   const { email, userName, password } = userDetail;
-  if (await readCollection(UsersData, { email })) {
+  if (await readCollection("users", { email })) {
     throw requestError("User email already exists");
   }
   await addCollection("users", {
@@ -30,7 +29,7 @@ exports.userSignup = async (userDetail) => {
 
 exports.userLogin = async function (userDetails) {
   const { email, password } = userDetails;
-  const existingUser = await readCollection(UsersData, { email });
+  const existingUser = await readCollection("users", { email });
   if (!existingUser) {
     throw requestError("Invalid User email");
   }
@@ -44,7 +43,7 @@ exports.userLogin = async function (userDetails) {
 exports.deleteUserAccount = async function (req) {
   const { email, password } = req.body;
   const requiredToken = req?.headers?.authorization?.split(" ")[1];
-  const userDetails = await readCollection(UsersData, { email });
+  const userDetails = await readCollection("users", { email });
   if (!userDetails) {
     throw requestError("Invalid User email");
   }
@@ -54,5 +53,5 @@ exports.deleteUserAccount = async function (req) {
   if (verifyToken(requiredToken).payload !== userDetails.email) {
     throw requestError("invalid token");
   }
-  await deleteCollection(UsersData, { email });
+  await deleteCollection("users", { email });
 };

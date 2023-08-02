@@ -53,6 +53,6 @@ exports.validateUserSchema = async (req, res, next) => {
     next();
   } catch (err) {
     console.error(err);
-    errorHandler(err.name, res, err.msg);
+    errorHandler(err, res);
   }
 };

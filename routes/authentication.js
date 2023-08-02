@@ -14,7 +14,7 @@ router.post("/signup", validateUserSchema, async (req, res) => {
     });
   } catch (err) {
     console.error(err, "error");
-    errorHandler(err.name, res, err.msg);
+    errorHandler(err, res);
   }
 });
 

@@ -9,10 +9,10 @@ exports.addCollection = async (name, payload) => {
   await collectionDetails.save();
 };
 
-exports.readCollection = async (Collection, payload) => {
-  return await Collection.findOne(payload);
+exports.readCollection = async (name, payload) => {
+  return await collectionGroup[`${name}`].findOne(payload);
 };
 
-exports.deleteCollection = async (Collection, payload) => {
-  await Collection.deleteOne(payload);
+exports.deleteCollection = async (name, payload) => {
+  await collectionGroup[`${name}`].deleteOne(payload);
 };

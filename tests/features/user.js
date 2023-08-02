@@ -13,7 +13,7 @@ const testUser = {
   password: "streaks123"
 };
 const readAndDeleteData = async () => {
-  const savedUserDetails = await readCollection(UsersData, { email: testUser.email });
+  const savedUserDetails = await readCollection("users", { email: testUser.email });
   if (savedUserDetails) {
     const token = await userLogin({ email: testUser.email, password: testUser.password });
     const req = {
@@ -39,7 +39,7 @@ describe("sign up feature", () => {
     expect(validEmail).to.equal(testUser.email);
   });
   it("to check if userdetails are saved in database", async () => {
-    const savedUserDetails = await readCollection(UsersData, { email: testUser.email });
+    const savedUserDetails = await readCollection("users", { email: testUser.email });
     expect({ email: savedUserDetails.email, userName: savedUserDetails.userName })
       .to.deep.equal({ email: testUser.email, userName: testUser.userName });
   });
@@ -155,7 +155,7 @@ describe("delete api", () => {
       }
     };
     await deleteUserAccount(req);
-    const userDetails = await readCollection(UsersData, { email: testUser.email });
+    const userDetails = await readCollection("users", { email: testUser.email });
     expect(userDetails).to.be.null
   });
 });
