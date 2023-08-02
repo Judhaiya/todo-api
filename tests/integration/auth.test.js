@@ -54,65 +54,35 @@ const payloadDetails = [
 ];
 
 async function apiNegative(negativePayload) {
-  const { url, payloadDetails, route } = negativePayload;
+  const { url, payloadDetails, method, headers } = negativePayload;
   for (const userDetail of payloadDetails) {
     const filterUserDetails = payloadDetails.filter(detail => detail.key !== userDetail.key);
     const correctDetails = filterUserDetails.reduce((prev, cur) => {
       return Object.assign(prev, { [cur.key]: cur.correctValue });
     }, {});
     for (const wrongValue of userDetail.wrongValues) {
-      if (route === "signup") {
-        const res = await chai.request(baseUrl.local.SERVER_URL)
-          .post(url)
-          .send({ correctDetails, [userDetail.key]: wrongValue });
-        expect(res.statusCode).to.equal(400);
-        return;
-      } else if (route === "login") {
-        const res = await chai.request(baseUrl.local.SERVER_URL)
-          .post(url)
-          .send({ correctDetails, [userDetail.key]: wrongValue });
-        expect(res.statusCode).to.equal(400);
-        return;
-      } else if (route === "deleteUser") {
-        if (userDetail.key === "token") {
-          const res = await chai.request(baseUrl.local.SERVER_URL)
-            .delete(url)
-            .send({ correctDetails })
-            .set({ Authorization: wrongValue });
-          expect(res.statusCode).to.equal(400);
-          return;
-        }
-        const { token, ...rest } = correctDetails;
-        const res = await chai.request(baseUrl.local.SERVER_URL)
-          .delete(url)
-          .send({ rest, [userDetail.key]: wrongValue })
-          .set({ Authorization: `Bearer ${token}` });
-        expect(res.statusCode).to.equal(400);
-      };
-    };
-    if (route === "deleteUser") {
-      if (userDetail.key !== "token") {
-        const { token, ...rest } = correctDetails;
-        const res = await chai.request(baseUrl.local.SERVER_URL)
-          .delete(url)
-          .send(rest)
-          .set({ Authorization: `Bearer ${rest}` });
-        expect(res.statusCode).to.equal(400);
-      };
-      const res = await chai.request(baseUrl.local.SERVER_URL)
-        .delete(url)
-        .send(correctDetails);
+      const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
+        .send({ ...correctDetails, [userDetail.key]: wrongValue })
+        .set({ Authorization: headers !== "" && `Bearer ${headers}` });
+
       expect(res.statusCode).to.equal(400);
-      return;
-    };
+    }
+    const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
+      .send(correctDetails)
+      .set({ Authorization: headers !== "" && `Bearer ${headers}` });
+    expect(res.statusCode).to.equal(400);
+  };
+}
+async function checkForValidToken(payload) {
+  const headers = ["", "1234"];
+  for (const header of headers) {
     const res = await chai.request(baseUrl.local.SERVER_URL)
-      .post(url)
-      .send(correctDetails);
+      .delete("/api/auth/deleteUser")
+      .send(payload)
+      .set({ Authorization: header !== "" && `Bearer ${header}` });
     expect(res.statusCode).to.equal(400);
   }
-};
-
-
+}
 describe("sign api prep", () => {
   describe("when signup is called", () => {
     before(async () => {
@@ -129,12 +99,14 @@ describe("sign api prep", () => {
         expect(res?.status).to.equal(200);
       }
     });
+    let token;
     it("does the api process registration correctly", async () => {
       const res = await chai.request(baseUrl.local.SERVER_URL)
         .post("/api/auth/signup")
         .send(userDetails);
       expect(res.status).to.equal(200);
       expect(res.body.msg).to.be.eql("User account has been created successfully");
+      token = res.body.token;
       const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET);
       expect(userDetails.email).eql(jwtDetails.payload);
       const registeredUserData = await readCollection("users", { email: userDetails.email });
@@ -147,16 +119,25 @@ describe("sign api prep", () => {
         const negativePayload = {
           url: "/api/auth/signup",
           payloadDetails,
-          route: "signup"
+          method: "post",
+          headers: ""
         };
         await apiNegative(negativePayload);
       }
     );
+    after(async () => {
+      const res = await chai.request(baseUrl.local.SERVER_URL)
+        .delete("/api/auth/deleteUser")
+        .set({ Authorization: `Bearer ${token}` })
+        .send(userDetails);
+      expect(res?.status).to.equal(200);
+    });
   });
 });
 
 describe("login test cases", () => {
   describe("when login is called", () => {
+    let token;
     before(async () => {
       await connectDB();
       const res = await chai.request(baseUrl.local.SERVER_URL)
@@ -165,7 +146,9 @@ describe("login test cases", () => {
       expect(res.statusCode).to.be.oneOf([200, 400]);
       expect(res.body.msg).to.be.oneOf(["User email already exists",
         "User account has been created successfully"]);
+      token = res.body.token;
     });
+
     it(`it should see whether the username already exists and
          respond with 200 if it is present`, async () => {
       const findEmail = await readCollection("users", { email: userDetails.email });
@@ -179,10 +162,21 @@ describe("login test cases", () => {
     const negativePayload = {
       url: "/api/auth/login",
       payloadDetails,
-      route: "login"
+      method: "post",
+      headers: ""
     };
     it("should return 400 if invalid data is fed", async () => {
       await apiNegative(negativePayload);
+    });
+    after(async () => {
+      const res = await chai.request(baseUrl.local.SERVER_URL)
+        .delete("/api/auth/deleteUser")
+        .set({ Authorization: `Bearer ${token}` })
+        .send({
+          email: userDetails.email,
+          password: userDetails.password
+        });
+      expect(res?.status).to.equal(200);
     });
   });
 });
@@ -196,7 +190,7 @@ describe("login test cases", () => {
 describe("when delete operation is executed", () => {
   describe("it should", () => {
     let token;
-    before(async () => {
+    beforeEach(async () => {
       await connectDB();
       const res = await chai.request(baseUrl.local.SERVER_URL)
         .post("/api/auth/signup")
@@ -228,6 +222,14 @@ describe("when delete operation is executed", () => {
         expect(res.statusCode).to.equal(200);
         expect(res.body.msg).to.equal("Account has been successfully deleted");
       });
+    it("should fail if valid token is not provided", async () => {
+      const deletePayload = {
+        email: "BrandonFlynn12@gmail.com",
+        password: "123456",
+        headers: "1234"
+      };
+      await checkForValidToken(deletePayload);
+    });
     it("should return 400 if invalid data is fed", async () => {
       const deleteDetails = [
         {
@@ -239,19 +241,25 @@ describe("when delete operation is executed", () => {
           key: "password",
           wrongValues: [1234, 1234578901112],
           correctValue: "gemininerd"
-        },
-        {
-          key: "token",
-          wrongValues: [1234556],
-          correctValue: token
         }
       ];
       const negativePayload = {
         url: "/api/auth/deleteUser",
         payloadDetails: deleteDetails,
-        route: "deleteUser"
+        method: "delete",
+        headers: `Bearer ${token}`
       };
       await apiNegative(negativePayload);
+    });
+    afterEach(async () => {
+      const res = await chai.request(baseUrl.local.SERVER_URL)
+        .delete("/api/auth/deleteUser")
+        .set({ Authorization: `Bearer ${token}` })
+        .send({
+          email: userDetails.email,
+          password: userDetails.password
+        });
+      expect(res.status).to.equal(200);
     });
   });
 });
