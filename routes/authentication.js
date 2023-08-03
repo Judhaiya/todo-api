@@ -5,6 +5,8 @@ const { errorHandler } = require("../services/errors");
 
 const router = express.Router();
 
+router.use(express.json());
+
 router.post("/signup", validateUserSchema, async (req, res) => {
   try {
     const token = await saveUserData(req.body);
