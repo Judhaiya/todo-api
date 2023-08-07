@@ -3,7 +3,6 @@ const { connectDB } = require("../../utils/databaseConnection");
 const { userSignup, userLogin, deleteUserAccount } = require("../../features/user");
 const { verifyToken } = require("../../services/token");
 const { readCollection } = require("../../services/mongodb/actionFunctions");
-const UsersData = require("../../services/mongodb/user");
 
 const expect = chai.expect;
 
