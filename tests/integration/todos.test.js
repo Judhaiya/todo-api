@@ -50,14 +50,18 @@ async function createOrLoginAccount(token) {
     const loginResponse = await chai.request(baseUrl.local.SERVER_URL)
       .post("/api/auth/login")
       .send(testUserData);
+    expect(loginResponse.status).to.equal(200);
     token = loginResponse.body.token;
-    expect(signupResponse.status).to.equal(200);
-    return;
-  }
+    const deleteResponse = await chai.request(baseUrl.local.SERVER_URL)
+      .post("/api/auth/login")
+      .send(testUserData)
+      .set({ Authorization: `Bearer ${token}` });
+    expect(deleteResponse).to.equal(200);
+  };
   expect(signupResponse.status).to.equal(200);
   token = signupResponse.body.token;
   return token;
-}
+};
 
 async function getAllTodos(token) {
   const getAllTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
@@ -183,8 +187,8 @@ describe("fetching specific todo by their id", () => {
       formValidation(invalidIds, token);
     });
     afterEach(async () => {
-      deleteUserAccount(token);
-      deleteTodoResponse(token);
+      await deleteUserAccount(token);
+      await deleteTodoResponse(token);
     });
   });
 });
@@ -258,7 +262,7 @@ describe("fetching all todos", () => {
       expect(updatedTodo.taskName).to.equal("clean desk");
     });
     afterEach(async () => {
-      deleteUserAccount(token);
+      await deleteUserAccount(token);
     });
   });
 });
@@ -294,8 +298,8 @@ describe("create todos", () => {
       checkForUploadedImg(newlyCreatedTodo.imageUrl, "./assets/img-1.jpg");
     });
     after(async () => {
-      deleteUserAccount(token);
-      deleteTodoResponse(token);
+      await deleteUserAccount(token);
+      await deleteTodoResponse(token);
     });
   });
 });
@@ -358,8 +362,8 @@ describe("update todos", () => {
       }
     });
     afterEach(async () => {
-      deleteUserAccount(token);
-      deleteTodoResponse(token);
+      await deleteUserAccount(token);
+      await deleteTodoResponse(token);
     });
   });
 });
@@ -389,10 +393,10 @@ describe("delete todo by id", () => {
         expect(err.msg).to.equal("invalid id");
         expect(err.name).to.equal("request error");
       }
-    })
+    });
     afterEach(async () => {
-      deleteUserAccount(token);
-      deleteTodoResponse(token);
+      await deleteUserAccount(token);
+      await deleteTodoResponse(token);
     });
   });
 });
@@ -429,14 +433,14 @@ describe("delete all todos", () => {
       }
     })
     it("delete all the todos", async () => {
-      deleteTodoResponse(token);
+      await deleteTodoResponse(token);
     });
     after(async () => {
-      deleteUserAccount(token);
+      await deleteUserAccount(token);
       const getAllTodoResponse = await getAllTodos(token);
       expect(getAllTodoResponse.status).to.equal(200);
       if (getAllTodoResponse.body.todos.length > 0) {
-        deleteTodoResponse(token);
+        await deleteTodoResponse(token);
       }
     });
   });
