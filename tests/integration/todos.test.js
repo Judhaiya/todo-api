@@ -1,7 +1,6 @@
 const chai = require("chai");
 const dotenv = require("dotenv");
 const chaiHttp = require("chai-http");
-const { readCollection } = require("../../services/mongodb/actionFunctions");
 const { connectDB } = require("../../utils/databaseConnection");
 const { baseUrl } = require("../../utils/baseUrl");
 const fs = require("fs");
@@ -62,6 +61,13 @@ async function getAllTodos(token) {
     .get("/api/todos/getAllTodos")
     .set({ Authorization: `Bearer ${token}` });
   return getAllTodoResponse;
+}
+async function deleteUserAccount(token) {
+  const deleteResponse = await chai.request(baseUrl.local.SERVER_URL)
+    .delete("/api/auth/deleteUser")
+    .send({ email: testUserData.email })
+    .set({ Authorization: `Bearer ${token}` });
+  expect(deleteResponse.status).to.equal(200);
 }
 
 describe("fetching specific todo by their id", () => {
@@ -154,11 +160,7 @@ describe("fetching specific todo by their id", () => {
       formValidation(invalidIds, token);
     });
     afterEach(async () => {
-      const deleteResponse = await chai.request(baseUrl.local.SERVER_URL)
-        .delete("/api/auth/deleteUser")
-        .send({ email: testUserData.email })
-        .set({ Authorization: `Bearer ${token}` });
-      expect(deleteResponse.status).to.equal(200);
+      deleteUserAccount(token);
       const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
         .get("/api/todos/deleteAllTodos")
         .set({ Authorization: `Bearer ${token}` });
@@ -213,7 +215,7 @@ describe("fetching all todos", () => {
       const getFirstTodo = getAllTodoResponse.body.todos.find(todo => todo.taskName === testTodoDatas[0]?.taskName);
       const updateTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
         .patch(`/api/todos/updateTodo/:${getFirstTodo.id}`)
-        .attach("image", fs.readFileSync("./assets/img-3.jpg"), "img-1.jpg")
+        .attach("image", fs.readFileSync("./assets/img-3.jpg"), "img-3.jpg")
         .type("form")
         .set({ Authorization: `Bearer ${token}` });
       expect(updateTodoResponse.status).to.equal(200);
@@ -235,6 +237,9 @@ describe("fetching all todos", () => {
       const updatedTodo = getAllTodoResponse.body.todos.find(todo => todo.id === getFirstTodo.id);
       expect(updatedTodo.taskName).to.equal("clean desk");
     });
+    afterEach(async () => {
+      deleteUserAccount(token);
+    })
   });
 });
 
@@ -252,6 +257,31 @@ describe("create todos", () => {
         .send(testTodoData)
         .set({ Authorization: `Bearer ${token}` });
       expect(todoResponse.status).to.eql(200);
+    });
+    it("if the todo is added successfully with image", async () => {
+      const todoResponse = await chai.request(baseUrl.local.SERVER_URL)
+        .post("/api/todos/createTodo")
+        .type("form")
+        .send(testTodoData)
+        .attach("image", fs.readFileSync("./assets/img-1.jpg"), "img-1.jpg")
+        .set({ Authorization: `Bearer ${token}` });
+      expect(todoResponse.status).to.eql(200);
+      const getAllTodoResponse = await getAllTodos(token);
+      const newlyCreatedTodo = getAllTodoResponse.body.todos.find(todo => todo.taskName === testTodoData.taskName);
+      checkForUploadedImg(newlyCreatedTodo.imageUrl, "./assets/img-1.jpg");
+    });
+    afterEach(async () => {
+      deleteUserAccount(token);
+    });
+  });
+});
+
+describe("update todos", () => {
+  describe("it passess the test case below", async () => {
+    let token;
+    beforeEach(async () => {
+      await connectDB();
+      token = await createOrLoginAccount(token);
     });
   });
 });
