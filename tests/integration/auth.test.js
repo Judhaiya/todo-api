@@ -52,7 +52,6 @@ const payloadDetails = [
     correctValue: "gemininerd"
   }
 ];
-
 async function apiNegative(negativePayload) {
   const { url, payloadDetails, method, headers } = negativePayload;
   for (const userDetail of payloadDetails) {
@@ -63,13 +62,13 @@ async function apiNegative(negativePayload) {
     for (const wrongValue of userDetail.wrongValues) {
       const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
         .send({ ...correctDetails, [userDetail.key]: wrongValue })
-        .set({ Authorization: headers !== "" && `Bearer ${headers}` });
+        .set(headers !== "" && headers);
 
       expect(res.statusCode).to.equal(400);
     }
     const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
       .send(correctDetails)
-      .set({ Authorization: headers !== "" && `Bearer ${headers}` });
+      .set(headers !== "" && headers);
     expect(res.statusCode).to.equal(400);
   };
 }
@@ -225,8 +224,7 @@ describe("when delete operation is executed", () => {
     it("should fail if valid token is not provided", async () => {
       const deletePayload = {
         email: "BrandonFlynn12@gmail.com",
-        password: "123456",
-        headers: "1234"
+        password: "123456"
       };
       await checkForValidToken(deletePayload);
     });
@@ -247,7 +245,7 @@ describe("when delete operation is executed", () => {
         url: "/api/auth/deleteUser",
         payloadDetails: deleteDetails,
         method: "delete",
-        headers: `Bearer ${token}`
+        headers: { Authorization: `Bearer ${token}` }
       };
       await apiNegative(negativePayload);
     });
