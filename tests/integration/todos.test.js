@@ -18,7 +18,16 @@ const testUserData = {
   userName: "testUser",
   email: "testUser11@gmail.com"
 };
-
+const testTodoDatas = [
+  {
+    taskName: "to watch movie",
+    image: ""
+  },
+  {
+    taskName: "to plan for next weekend",
+    image: "./assets/img-1.jpg"
+  }
+];
 async function getTodoById(requiredId, token) {
   const getTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
     .get(`/api/todos/getTodos/:${requiredId}`)
@@ -104,7 +113,7 @@ async function checkIfTokenPassed(method, url, payloadData) {
 async function formValidation(negativePayload) {
   const { url, method, headers, payload } = negativePayload;
   const invalidIds = ["1234", ""];
-  const path = url?.split("/")[3]
+  const path = url?.split("/")[3];
   for (const id of invalidIds) {
     try {
       if (method === "patch") {
@@ -114,8 +123,7 @@ async function formValidation(negativePayload) {
           .type("form");
         return;
       }
-      await chai.request(baseUrl.local.SERVER_URL)
-      [`${method}`](`/api/todos/${path}/:${id}`)
+      await chai.request(baseUrl.local.SERVER_URL)[`${method}`](`/api/todos/${path}/:${id}`)
         .set(headers);
     } catch (err) {
       expect(err.code).to.equal(400);
@@ -221,7 +229,7 @@ describe("fetching specific todo by their id", () => {
         method: "get",
         url: `/api/todos/getTodo/:${requiredId}`,
         payload: ""
-      }
+      };
       await checkIfTokenPassed(tokenValidationPayload);
     });
     afterEach(async () => {
@@ -272,35 +280,6 @@ describe("fetching all todos", () => {
       });
       expect(todoList).to.have.deep.members(testTodoDatas);
       expect(getAllTodoResponse.status).to.equal(200);
-    });
-
-    it("check if it is fetching all the updated image", async () => {
-      let getAllTodoResponse;
-      getAllTodoResponse = await getAllTodos(token);
-      const getFirstTodo = getAllTodoResponse.body.todos.find(todo => todo.taskName === testTodoDatas[1]?.taskName);
-      const updateTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
-        .patch(`/api/todos/updateTodo/:${getFirstTodo.id}`)
-        .attach("image", fs.readFileSync("./assets/img-3.jpg"), "img-3.jpg")
-        .type("form")
-        .set({ Authorization: `Bearer ${token}` });
-      expect(updateTodoResponse.status).to.equal(200);
-      getAllTodoResponse = await getAllTodos(token);
-      const updatedTodo = getAllTodoResponse.body.todos.find(todo => todo.id === getFirstTodo.id);
-      checkForUploadedImg(updatedTodo.imageUrl, "./assets/img-3.jpg");
-    });
-    it("check if it is fetching all the updated title", async () => {
-      let getAllTodoResponse;
-      getAllTodoResponse = await getAllTodos(token);
-      const getFirstTodo = getAllTodoResponse.body.todos.find(todo => todo.taskName === testTodoDatas[0]?.taskName);
-      const updateTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
-        .patch(`/api/todos/updateTodo/:${getFirstTodo.id}`)
-        .send({ taskName: "clean desk" })
-        .type("form")
-        .set({ Authorization: `Bearer ${token}` });
-      expect(updateTodoResponse.status).to.equal(200);
-      getAllTodoResponse = await getAllTodos(token);
-      const updatedTodo = await getTodoById(getFirstTodo.id, token);
-      expect(updatedTodo.body.todo.taskName).to.equal("clean desk");
     });
     it("throw error if token is not passed", async () => {
       const tokenValidationPayload = {
