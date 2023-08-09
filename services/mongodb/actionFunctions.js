@@ -1,7 +1,8 @@
 const UsersData = require("./user");
-
+const TodoList = require("./todoList");
 const collectionGroup = {
-  users: UsersData
+  users: UsersData,
+  todos: TodoList
 };
 
 exports.addCollection = async (name, payload) => {
@@ -15,4 +16,8 @@ exports.readCollection = async (name, payload) => {
 
 exports.deleteCollection = async (name, payload) => {
   await collectionGroup[`${name}`].deleteOne(payload);
+};
+
+exports.getAllCollection = async (name) => {
+  await collectionGroup[`${name}`].find({});
 };
