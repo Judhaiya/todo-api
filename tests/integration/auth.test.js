@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { connectDB } = require("../../utils/databaseConnection");
 const { baseUrl } = require("../../utils/baseUrl");
+const { apiNegative } = require("../integration/apiNegative");
 
 dotenv.config();
 chai.use(chaiHttp);
@@ -52,26 +53,6 @@ const payloadDetails = [
     correctValue: "gemininerd"
   }
 ];
-async function apiNegative(negativePayload) {
-  const { url, payloadDetails, method, headers } = negativePayload;
-  for (const userDetail of payloadDetails) {
-    const filterUserDetails = payloadDetails.filter(detail => detail.key !== userDetail.key);
-    const correctDetails = filterUserDetails.reduce((prev, cur) => {
-      return Object.assign(prev, { [cur.key]: cur.correctValue });
-    }, {});
-    for (const wrongValue of userDetail.wrongValues) {
-      const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
-        .send({ ...correctDetails, [userDetail.key]: wrongValue })
-        .set(headers !== "" && headers);
-
-      expect(res.statusCode).to.equal(400);
-    }
-    const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
-      .send(correctDetails)
-      .set(headers !== "" && headers);
-    expect(res.statusCode).to.equal(400);
-  };
-}
 async function checkForValidToken(payload) {
   const headers = ["", "1234"];
   for (const header of headers) {
