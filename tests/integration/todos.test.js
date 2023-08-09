@@ -28,7 +28,7 @@ const testTodoDatas = [
 ];
 async function getTodoById(requiredId, token) {
   const getTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
-    .get("/api/todos/getTodos")
+    .get("/api/todos/getTodo")
     .set({ Authorization: `Bearer ${token}` })
     .query({ id: requiredId });
   return getTodoResponse;
@@ -97,7 +97,7 @@ async function createTodoAndGetId(token) {
 async function checkIfTokenPassed(method, url, payloadData) {
   try {
     if (method === "get") {
-      if (payloadData !== "") {
+      if (payloadData !== null) {
         await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
           .send(payloadData);
         return;
@@ -242,8 +242,8 @@ describe("fetching all todos", () => {
       const tokenValidationPayload = {
         method: "get",
         url: "/api/todos/getAllTodos",
-        payload: ""
-      }
+        payload: null
+      };
       await checkIfTokenPassed(tokenValidationPayload);
     });
     afterEach(async () => {
@@ -297,7 +297,7 @@ describe("update todos", () => {
     beforeEach(async () => {
       await connectDB();
       token = await createAccount(token);
-      newlyCreatedTodo = createTodoAndGetId(token);
+      newlyCreatedTodo = await createTodoAndGetId(token);
     });
     it("should have correct data when taskname is updated while image is not updated", async () => {
       const updateTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
@@ -355,7 +355,7 @@ describe("delete todo by id", () => {
     beforeEach(async () => {
       await connectDB();
       token = await createAccount(token);
-      newlyCreatedTodo = createTodoAndGetId(token);
+      newlyCreatedTodo = await createTodoAndGetId(token);
     });
     it("should delete todo if valid id is provided", async () => {
       const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
@@ -430,8 +430,8 @@ describe("delete all todos", () => {
       const tokenValidationPayload = {
         method: "delete",
         url: "/api/todos/deleteAllTodos",
-        payload: ""
-      }
+        payload: null
+      };
       await checkIfTokenPassed(tokenValidationPayload);
     });
     after(async () => {

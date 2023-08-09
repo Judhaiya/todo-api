@@ -100,7 +100,7 @@ describe("sign api prep", () => {
           url: "/api/auth/signup",
           payloadDetails,
           method: "post",
-          headers: ""
+          headers: null
         };
         await apiNegative(negativePayload);
       }
@@ -143,7 +143,7 @@ describe("login test cases", () => {
       url: "/api/auth/login",
       payloadDetails,
       method: "post",
-      headers: ""
+      headers: null
     };
     it("should return 400 if invalid data is fed", async () => {
       await apiNegative(negativePayload);

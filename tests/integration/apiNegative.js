@@ -14,20 +14,20 @@ module.exports.apiNegative = async function apiNegative(negativePayload) {
     for (const wrongValue of formData.wrongValues) {
       if (method === "get") {
         const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
-          .set(headers !== "" && headers)
+          .set(headers !== null && headers)
           .query({ ...correctDetails, [formData.key]: wrongValue });
         expect(res.statusCode).to.equal(400);
         return;
       }
       const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
         .send({ ...correctDetails, [formData.key]: wrongValue })
-        .set(headers !== "" && headers);
+        .set(headers !== null && headers);
       expect(res.statusCode).to.equal(400);
     }
     const { [formData.key]: removedProperty, ...correctFields } = correctDetails;
     const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
       .send(correctFields)
-      .set(headers !== "" && headers);
+      .set(headers !== null && headers);
     expect(res.statusCode).to.equal(400);
   };
 };
