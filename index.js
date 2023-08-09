@@ -11,5 +11,4 @@ const startServer = async () => {
   app.listen(8080);
 };
 app.use("/api/auth", authRoutes);
-
 startServer();
