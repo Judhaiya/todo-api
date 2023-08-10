@@ -35,6 +35,15 @@ const getUserSchema = (path) => {
           required: ["email", "password"]
         };
         break;
+      case "/createTodo":
+        requiredSchema = {
+          properties: {
+            taskName: { type: "string" },
+            image: { type: "string" }
+          },
+          required: ["taskName"]
+        };
+        break;
       default:
         throw new Error(`${path} is invalid path`);
     };

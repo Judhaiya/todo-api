@@ -177,7 +177,7 @@ describe("fetching specific todo by their id", () => {
       }
       catch (err) {
         expect(err.code).to.equal(400);
-        expect(err.msg).to.equal("Invalid todo Id");
+        expect(err.msg).to.equal("Cannot find todo with the provided id,Invalid id");
         expect(err.name).to.equal("request error");
       }
     });
