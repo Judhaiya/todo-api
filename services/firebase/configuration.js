@@ -8,3 +8,5 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket: process.env.FIREBASE_BUCKET_LOCATION
 });
+
+exports.bucket = admin.storage().bucket();

@@ -1,6 +1,7 @@
 const express = require("express");
 const { saveUserData, loginUser, deleteAccount } = require("../controllers/authentication");
 const { validateUserSchema } = require("../middlewares/validation");
+const { validateToken } = require("../middlewares/tokenValidation");
 const { errorHandler } = require("../services/errors");
 
 const router = express.Router();
@@ -32,7 +33,7 @@ router.post("/login", validateUserSchema, async (req, res) => {
     errorHandler(err, res);
   }
 });
-router.delete("/deleteUser", validateUserSchema, async (req, res) => {
+router.delete("/deleteUser", validateToken, validateUserSchema, async (req, res) => {
   try {
     await deleteAccount(req);
     res.status(200).json({ msg: "Account has been successfully deleted" });

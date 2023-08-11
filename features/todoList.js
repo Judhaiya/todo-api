@@ -1,6 +1,7 @@
 const { getAllCollection, addCollection, readCollection } = require("../services/mongodb/actionFunctions");
 const { requestError } = require("../services/errors");
-const { getStorage, getDownloadURL } = require("firebase-admin/storage");
+const { getDownlodableUrl, uploadFile } = require("../services/firebase/actionFunctions");
+const path = require("path");
 
 exports.fetchingTodos = async () => {
   const allTodos = await getAllCollection("todos");
@@ -12,30 +13,34 @@ exports.fetchingTodos = async () => {
 
 exports.fetchingSingleTodo = async (req) => {
   const singleTodo = await readCollection("todos", { id: req.query.id });
+
   if (!singleTodo) {
     throw requestError("Cannot find todo with the provided id,Invalid id");
   }
-  return singleTodo;
+  if (singleTodo.referencePath === "") { return singleTodo; }
+  const filePath = await getDownlodableUrl(singleTodo.referencePath);
+  return { ...singleTodo, image: filePath };
 };
 
 exports.createTodo = async (req) => {
   let payload;
   let newlyCreatedTodo;
   if (req.body.taskName === "") { return; }
-  if (req.files.image === "") {
+  if (req.file === "") {
     payload = {
-      taskName: req.body.taskName
+      taskName: req.body.taskName,
+      isCompleted: false
     };
     await addCollection("todos", payload);
     newlyCreatedTodo = readCollection("todos", { taskName: req.body.taskName });
     return newlyCreatedTodo.id;
   }
-  const fileRef = getStorage().bucket().file(req.files.image.path);
-  const downloadableUrl = await getDownloadURL(fileRef);
+  const fileDestination = path.join(req?.file?.path.split("\\")[0], `${req?.file?.path.split("\\")[1]}`, `${req?.file?.path.split("\\")[2]}`);
+  uploadFile(fileDestination, `todos/images/${req?.file?.path.split("\\")[2]}`);
   payload = {
     taskName: req.body.taskName,
-    referenceUrl: fileRef,
-    image: downloadableUrl
+    referencePath: `todos/images/${req?.file?.path.split("\\")[2]}`,
+    isCompleted: false
   };
   await addCollection("todos", payload);
   newlyCreatedTodo = readCollection("todos", { taskName: req.body.taskName });

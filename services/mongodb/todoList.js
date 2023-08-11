@@ -9,7 +9,7 @@ const todoSchema = new mongoose.Schema({
   isCompleted: {
     type: Boolean
   },
-  referenceUrl: {
+  referencePath: {
     type: String
   }
 });

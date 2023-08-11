@@ -42,16 +42,12 @@ exports.userLogin = async function (userDetails) {
 
 exports.deleteUserAccount = async function (req) {
   const { email, password } = req.body;
-  const requiredToken = req?.headers?.authorization?.split(" ")[1];
   const userDetails = await readCollection("users", { email });
   if (!userDetails) {
     throw requestError("Invalid User email");
   }
   if (!await comparePassword(password, email)) {
     throw requestError("Password doesn't match");
-  }
-  if (verifyToken(requiredToken).payload !== userDetails.email) {
-    throw requestError("invalid token");
   }
   await deleteCollection("users", { email });
 };
