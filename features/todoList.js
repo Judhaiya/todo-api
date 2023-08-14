@@ -1,4 +1,4 @@
-const { getAllCollection, addCollection, readCollection, updateCollection, deleteCollection } = require("../services/mongodb/actionFunctions");
+const { getAllCollection, addCollection, readCollection, updateCollection, deleteCollection, deleteAllDocument } = require("../services/mongodb/actionFunctions");
 const { requestError } = require("../services/errors");
 const { getDownlodableUrl, deleteFileInStorage } = require("../services/firebase/actionFunctions");
 const { uploadAndDeleteInDisk } = require("../services/fileUtility");
@@ -87,4 +87,8 @@ exports.deleteTodo = async (req) => {
     throw requestError("todo id doesn't exists.Please enter valid id");
   }
   await deleteCollection("todos", { id: req.body.id });
+};
+
+exports.deleteAllTodos = async () => {
+  await deleteAllDocument("todos");
 };

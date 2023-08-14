@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getAllTodos, getSingleTodo, createNewTodo, updateSingleTodo, deleteTodo } = require("../controllers/todoList");
+const { getAllTodos, getSingleTodo, createNewTodo, updateSingleTodo, deleteTodo, deleteAllTodoItems } = require("../controllers/todoList");
 const { errorHandler } = require("../services/errors");
 const { validateUserSchema } = require("../middlewares/validation");
 const { validateToken } = require("../middlewares/tokenValidation");
@@ -69,6 +69,15 @@ router.delete("/deleteTodo", validateToken, validateUserSchema, async (req, res)
   } catch (err) {
     errorHandler(err, res);
     console.error(err, "error in deleting todo");
+  }
+});
+
+router.delete("/deleteAllTodos", validateToken, async (req, res) => {
+  try {
+    await deleteAllTodoItems();
+  } catch (err) {
+    errorHandler(err, res);
+    console.error(err, "error in deleting all todo items");
   }
 });
 

@@ -410,7 +410,7 @@ describe("delete all todos", () => {
       expect(getAllTodoResponse.status).to.equal(200);
       if (getAllTodoResponse.body.todos.length > 0) {
         const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
-          .delete("/api/todos/deleteTodos")
+          .delete("/api/todos/deleteAllTodos")
           .set({ Authorization: `Bearer ${token}` });
         expect(deleteTodoResponse.status).to.equal(200);
       }
