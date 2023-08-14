@@ -1,4 +1,4 @@
-const { fetchingTodos, fetchingSingleTodo, createTodo } = require("../features/todoList");
+const { fetchingTodos, fetchingSingleTodo, createTodo, updateTodo, deleteTodo } = require("../features/todoList");
 
 exports.getAllTodos = async () => {
   const todoList = await fetchingTodos();
@@ -13,4 +13,12 @@ exports.getSingleTodo = async (req) => {
 exports.createNewTodo = async (req) => {
   const newTodoId = await createTodo(req);
   return newTodoId;
+};
+
+exports.updateSingleTodo = async (req) => {
+  await updateTodo(req);
+};
+
+exports.deleteTodo = async (req) => {
+  await deleteTodo(req);
 };

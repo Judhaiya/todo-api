@@ -2,16 +2,25 @@ const { bucket } = require("../firebase/configuration");
 const { getStorage, getDownloadURL } = require("firebase-admin/storage");
 const dotenv = require("dotenv");
 
-require(dotenv).config();
+dotenv.config();
 
 exports.uploadFile = async (fileDestination, bucketDestination) => {
   try {
-    console.log(fileDestination, bucketDestination, "both destination");
     await bucket.upload(fileDestination, {
       destination: bucketDestination
     });
   } catch (err) {
     console.error(err);
+    throw new Error(err.message);
+  }
+};
+
+exports.deleteFileInStorage = async (bucketDestination) => {
+  try {
+    await bucket.file(bucketDestination).delete();
+  } catch (err) {
+    console.error(err);
+    throw new Error(err.message);
   }
 };
 
@@ -19,8 +28,9 @@ exports.getDownlodableUrl = async (filepath) => {
   try {
     const fileRef = getStorage().bucket(process.env.FIREBASE_BUCKET_LOCATION).file(filepath);
     const downloadURL = await getDownloadURL(fileRef);
-    console.log(downloadURL, "durl");
+    return downloadURL;
   } catch (err) {
     console.error(err);
+    throw new Error(err.message);
   }
 };

@@ -44,6 +44,24 @@ const getUserSchema = (path) => {
           required: ["taskName"]
         };
         break;
+      case "/updateTodo":
+        requiredSchema = {
+          properties: {
+            id: { type: "objectId" },
+            taskName: { type: "string" },
+            image: { type: "string" }
+          },
+          required: ["id"]
+        };
+        break;
+      case "/deleteTodo":
+        requiredSchema = {
+          properties: {
+            id: { type: "objectId" }
+          },
+          required: ["id"]
+        };
+        break;
       default:
         throw new Error(`${path} is invalid path`);
     };

@@ -1,4 +1,4 @@
-const { generateToken, verifyToken } = require("../services/token");
+const { generateToken } = require("../services/token");
 const { requestError } = require("../services/errors");
 const bcrypt = require("bcrypt");
 const { addCollection, readCollection, deleteCollection } = require("../services/mongodb/actionFunctions");

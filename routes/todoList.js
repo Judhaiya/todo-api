@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getAllTodos, getSingleTodo, createNewTodo } = require("../controllers/todoList");
+const { getAllTodos, getSingleTodo, createNewTodo, updateSingleTodo, deleteTodo } = require("../controllers/todoList");
 const { errorHandler } = require("../services/errors");
 const { validateUserSchema } = require("../middlewares/validation");
 const { validateToken } = require("../middlewares/tokenValidation");
@@ -47,7 +47,29 @@ router.post("/createTodo", upload.single("image"), validateToken, validateUserSc
     const newTodoId = await createNewTodo(req);
     res.status(200).json({ msg: "todo created successfully", todoId: newTodoId });
   } catch (err) {
+    errorHandler(err, res);
     console.error(err, "error in conversion");
   }
 });
+
+router.patch("/updateTodo", validateToken, validateUserSchema, async (req, res) => {
+  try {
+    await updateSingleTodo(req);
+    res.status(200).json({ msg: "Details have been updated successfully" });
+  } catch (err) {
+    errorHandler(err, res);
+    console.error(err, "error in updating in todo");
+  }
+});
+
+router.delete("/deleteTodo", validateToken, validateUserSchema, async (req, res) => {
+  try {
+    await deleteTodo(req);
+    res.status(200).json({ msg: "todo has been deleted successfully" });
+  } catch (err) {
+    errorHandler(err, res);
+    console.error(err, "error in deleting todo");
+  }
+});
+
 module.exports = router;
