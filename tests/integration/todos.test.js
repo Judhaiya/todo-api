@@ -6,6 +6,7 @@ const { baseUrl } = require("../../utils/baseUrl");
 const fs = require("fs");
 const convertToBase64 = require("../../services/convertToBase64");
 const apiNegative = require("../integration/apiNegative");
+const path = require("path");
 
 dotenv.config();
 chai.use(chaiHttp);
@@ -14,16 +15,16 @@ const expect = chai.expect;
 
 const testUserData = {
   userName: "testUser",
-  email: "testUser11@gmail.com"
+  email: "testUser11@gmail.com",
+  password: "testUser123"
 };
 const testTodoDatas = [
   {
-    taskName: "to watch movie",
-    image: ""
+    taskName: "to watch movie"
   },
   {
     taskName: "to plan for next weekend",
-    image: "./assets/img-1.jpg"
+    image: "../../utils/assets/img-1.jpg"
   }
 ];
 async function getTodoById(requiredId, token) {
@@ -54,7 +55,7 @@ async function createAccount(token) {
       .delete("/api/auth/deleteUser")
       .send(testUserData)
       .set({ Authorization: `Bearer ${token}` });
-    expect(deleteResponse).to.equal(200);
+    expect(deleteResponse.status).to.equal(200);
   };
   expect(signupResponse.status).to.equal(200);
   token = signupResponse.body.token;
@@ -71,7 +72,7 @@ async function getAllTodos(token) {
 async function deleteUserAccount(token) {
   const deleteResponse = await chai.request(baseUrl.local.SERVER_URL)
     .delete("/api/auth/deleteUser")
-    .send({ email: testUserData.email })
+    .send({ email: testUserData.email, password: testUserData.password })
     .set({ Authorization: `Bearer ${token}` });
   expect(deleteResponse.status).to.equal(200);
 }
@@ -260,19 +261,30 @@ describe("create todos", () => {
       token = await createAccount(token);
     })
     it("should give expected image and title if they are added", async () => {
+
       for (const todoData of testTodoDatas) {
         const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
           .post("/api/todos/createTodo")
-          .send(todoData)
+          .field(todoData)
           .type("form")
-          .attach("image", fs.readFileSync(todoData?.img), todoData.image)
           .set({ Authorization: `Bearer ${token}` });
+        if ("image" in todoData) {
+          const filePath = path.join(todoData.image.split("/")[2], todoData.image.split("/")[3], todoData.image.split("/")[4]);
+          const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
+            .post("/api/todos/createTodo")
+            .field(todoData)
+            .type("form")
+            .attach("image", fs.readFileSync(filePath), filePath)
+            .set({ Authorization: `Bearer ${token}` });
+          expect(createTodoResponse.status).to.equal(200);
+          const newTodo = await getTodoById(createTodoResponse.body.todo.id, token);
+          checkForUploadedImg(createTodoResponse.body.todo.imageUrl, path.join("utils", "assets", "img-1.jpg"));
+          expect(newTodo.body.todo.taskName).to.equal(todoData.taskName);
+          return;
+        }
         expect(createTodoResponse.status).to.equal(200);
         const newTodo = await getTodoById(createTodoResponse.body.todo.id, token);
         expect(newTodo.body.todo.taskName).to.equal(todoData.taskName);
-        if (todoData.image !== "") {
-          checkForUploadedImg(createTodoResponse.body.todo.imageUrl, "./assets/img-1.jpg");
-        };
       };
     });
     it("throw error if token is not passed", async () => {
@@ -283,7 +295,7 @@ describe("create todos", () => {
       };
       await checkIfTokenPassed("post", "/api/todos/createTodo", tokenValidationPayload);
     });
-    after(async () => {
+    afterEach(async () => {
       await deleteUserAccount(token);
       await deleteTodoResponse(token);
     });

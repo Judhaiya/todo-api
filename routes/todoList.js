@@ -4,8 +4,8 @@ const { getAllTodos, getSingleTodo, createNewTodo, updateSingleTodo, deleteTodo,
 const { errorHandler } = require("../services/errors");
 const { validateUserSchema } = require("../middlewares/validation");
 const { validateToken } = require("../middlewares/tokenValidation");
-
 const multer = require("multer");
+const path = require("path");
 
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
@@ -32,11 +32,11 @@ router.get("/getSingleTodo", validateToken, async (req, res) => {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "../todo-api/tmp/uploads");
+    cb(null, path.join("tmp", "uploads"));
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + "-" + uniqueSuffix);
+    cb(null, file.fieldname + "-" + uniqueSuffix + "." + file.mimetype.split("/")[1]);
   }
 });
 

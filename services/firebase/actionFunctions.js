@@ -1,4 +1,4 @@
-const { bucket } = require("../firebase/configuration");
+const { bucket } = require("./configuration");
 const { getStorage, getDownloadURL } = require("firebase-admin/storage");
 const dotenv = require("dotenv");
 
@@ -10,7 +10,7 @@ exports.uploadFile = async (fileDestination, bucketDestination) => {
       destination: bucketDestination
     });
   } catch (err) {
-    console.error(err);
+    console.error(err.message);
     throw new Error(err.message);
   }
 };
