@@ -11,6 +11,9 @@ const todoSchema = new mongoose.Schema({
   },
   referencePath: {
     type: String
+  },
+  createdAt: {
+    type: Object
   }
 });
 

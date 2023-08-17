@@ -36,7 +36,6 @@ exports.getDownlodableUrl = async (filepath) => {
 };
 
 exports.downloadFileFromBucket = async (bucketLocation, downloadLocation) => {
-  console.log(bucketLocation, downloadLocation, "bucket location", "downloadlocation");
   try {
     const res = bucket.file(bucketLocation).download({ destination: downloadLocation });
     return res;

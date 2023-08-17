@@ -8,6 +8,7 @@ const { convertToBase64 } = require("../../services/convertToBase64");
 const { downloadFileFromBucket } = require("../../services/firebase/actionFunctions");
 const apiNegative = require("../integration/apiNegative");
 const path = require("path");
+const { deleteFileInDisk } = require("../../services/fileUtility");
 
 dotenv.config();
 chai.use(chaiHttp);
@@ -80,7 +81,7 @@ async function deleteUserAccount(token) {
 
 async function deleteTodoResponse(token) {
   const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
-    .get("/api/todos/deleteAllTodos")
+    .delete("/api/todos/deleteAllTodos")
     .set({ Authorization: `Bearer ${token}` });
   expect(deleteTodoResponse.status).to.equal(200);
 }
@@ -97,23 +98,23 @@ async function createTodoAndGetId(token) {
   return newlyCreatedTodo;
 }
 async function checkIfTokenPassed(method, url, payloadData) {
-  try {
-    if (method === "get") {
-      if (payloadData !== null) {
-        await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
-          .send(payloadData);
-        return;
-      }
-      await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url);
+  if (method === "get") {
+    if (payloadData !== null) {
+      const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
+        .send(payloadData);
+      expect(res.status).to.equal(400);
+      expect(res.body.msg).to.equal("jwt must be provided");
       return;
     }
-    await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
-      .send(payloadData);
-  } catch (err) {
-    expect(err.code).to.equal(400);
-    expect(err.msg).to.equal("token is not passed");
-    expect(err.name).to.equal("request error");
+    const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url);
+    expect(res.status).to.equal(400);
+    expect(res.body.msg).to.equal("jwt must be provided");
+    return;
   }
+  const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
+    .send(payloadData);
+  expect(res.status).to.equal(400);
+  expect(res.body.msg).to.equal("jwt must be provided");
 }
 
 describe("fetching specific todo by their id", () => {
@@ -263,7 +264,7 @@ describe("create todos", () => {
     })
     it("should give expected image and title if they are added", async () => {
       for (const todoData of testTodoDatas) {
-        if ("image" in todoData) {
+        if (todoData.image !== undefined) {
           const filePath = path.join(todoData.image.split("/")[2], todoData.image.split("/")[3], todoData.image.split("/")[4]);
           const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
             .post("/api/todos/createTodo")
@@ -276,6 +277,7 @@ describe("create todos", () => {
           const fileDownloadPath = path.join("tests", "uploads", newTodo.body.todo._doc.referencePath.split("/")[2]);
           await downloadFileFromBucket(newTodo.body.todo._doc.referencePath, fileDownloadPath);
           await checkForUploadedImg(fileDownloadPath, path.join("utils", "assets", "img-1.jpg"));
+          deleteFileInDisk(fileDownloadPath);
           expect(newTodo.body.todo._doc.taskName).to.equal(todoData.taskName);
           return;
         }

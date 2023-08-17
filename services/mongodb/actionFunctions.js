@@ -26,5 +26,5 @@ exports.updateCollection = async (name, payload) => {
   await collectionGroup[`${name}`](payload.filter, payload.update);
 };
 exports.deleteAllDocument = async (name) => {
-  await collectionGroup[`${name}`].remove({});
+  await collectionGroup[`${name}`].deleteMany({});
 };

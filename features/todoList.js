@@ -36,12 +36,14 @@ exports.createTodo = async (req) => {
   let payload;
   payload = {
     taskName: req.body.taskName,
-    isCompleted: false
+    isCompleted: false,
+    createdAt: new Date()
   };
   if (req.file) {
-    const fileDestination = path.join(req?.file?.path.split("\\")[0], req?.file?.path.split("\\")[1], req?.file?.path.split("\\")[2]);
-    await uploadAndDeleteInDisk(fileDestination, `todos/images/${req?.file?.path.split("\\")[2]}`);
-    payload = { ...payload, referencePath: `todos/images/${req?.file?.path.split("\\")[2]}` };
+    const normalizePath = path.normalize(req.file.path);
+    const fileDestination = path.join(normalizePath.split("/")[0], normalizePath.split("/")[1], normalizePath.split("/")[2]);
+    await uploadAndDeleteInDisk(fileDestination, `todos/images/${normalizePath.split("/")[2]}`);
+    payload = { ...payload, referencePath: `todos/images/${normalizePath.split("/")[2]}` };
   }
   await addCollection("todos", payload);
   const newlyCreatedTodo = await readCollection("todos", { taskName: req.body.taskName });

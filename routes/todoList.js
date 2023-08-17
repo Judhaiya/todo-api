@@ -75,6 +75,7 @@ router.delete("/deleteTodo", validateToken, validateUserSchema, async (req, res)
 router.delete("/deleteAllTodos", validateToken, async (req, res) => {
   try {
     await deleteAllTodoItems();
+    res.status(200).json({ msg: "all the todos have been erased successfully" });
   } catch (err) {
     errorHandler(err, res);
     console.error(err, "error in deleting all todo items");
