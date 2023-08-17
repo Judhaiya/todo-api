@@ -4,7 +4,8 @@ const chaiHttp = require("chai-http");
 const { connectDB } = require("../../utils/databaseConnection");
 const { baseUrl } = require("../../utils/baseUrl");
 const fs = require("fs");
-const convertToBase64 = require("../../services/convertToBase64");
+const { convertToBase64 } = require("../../services/convertToBase64");
+const { downloadFileFromBucket } = require("../../services/firebase/actionFunctions");
 const apiNegative = require("../integration/apiNegative");
 const path = require("path");
 
@@ -29,7 +30,7 @@ const testTodoDatas = [
 ];
 async function getTodoById(requiredId, token) {
   const getTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
-    .get("/api/todos/getTodo")
+    .get("/api/todos/getSingleTodo")
     .set({ Authorization: `Bearer ${token}` })
     .query({ id: requiredId });
   return getTodoResponse;
@@ -261,13 +262,7 @@ describe("create todos", () => {
       token = await createAccount(token);
     })
     it("should give expected image and title if they are added", async () => {
-
       for (const todoData of testTodoDatas) {
-        const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
-          .post("/api/todos/createTodo")
-          .field(todoData)
-          .type("form")
-          .set({ Authorization: `Bearer ${token}` });
         if ("image" in todoData) {
           const filePath = path.join(todoData.image.split("/")[2], todoData.image.split("/")[3], todoData.image.split("/")[4]);
           const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
@@ -277,13 +272,19 @@ describe("create todos", () => {
             .attach("image", fs.readFileSync(filePath), filePath)
             .set({ Authorization: `Bearer ${token}` });
           expect(createTodoResponse.status).to.equal(200);
-          const newTodo = await getTodoById(createTodoResponse.body.todo.id, token);
-          checkForUploadedImg(createTodoResponse.body.todo.imageUrl, path.join("utils", "assets", "img-1.jpg"));
-          expect(newTodo.body.todo.taskName).to.equal(todoData.taskName);
+          const newTodo = await getTodoById(createTodoResponse.body.todoId, token);
+          const fileDownloadPath = path.join("tests", "uploads", newTodo.body.todo._doc.referencePath.split("/")[2]);
+          await downloadFileFromBucket(newTodo.body.todo._doc.referencePath, fileDownloadPath);
+          await checkForUploadedImg(fileDownloadPath, path.join("utils", "assets", "img-1.jpg"));
+          expect(newTodo.body.todo._doc.taskName).to.equal(todoData.taskName);
           return;
         }
+        const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
+          .post("/api/todos/createTodo")
+          .send({ taskName: todoData.taskName })
+          .set({ Authorization: `Bearer ${token}` });
         expect(createTodoResponse.status).to.equal(200);
-        const newTodo = await getTodoById(createTodoResponse.body.todo.id, token);
+        const newTodo = await getTodoById(createTodoResponse.body.todoId, token);
         expect(newTodo.body.todo.taskName).to.equal(todoData.taskName);
       };
     });

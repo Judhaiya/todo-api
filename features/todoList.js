@@ -20,14 +20,16 @@ exports.fetchingTodos = async () => {
 };
 
 exports.fetchingSingleTodo = async (req) => {
-  const singleTodo = await readCollection("todos", { id: req.query.id });
-
+  const singleTodo = await readCollection("todos", { _id: req.query.id });
   if (!singleTodo) {
     throw requestError("Cannot find todo with the provided id,Invalid id");
   }
-  if (singleTodo.referencePath === "") { return singleTodo; }
-  const filePath = await getDownlodableUrl(singleTodo.referencePath);
-  return { ...singleTodo, imageUrl: filePath };
+
+  if (singleTodo.referencePath !== undefined) {
+    const filePath = await getDownlodableUrl(singleTodo.referencePath);
+    return { ...singleTodo, imageUrl: filePath };
+  }
+  return singleTodo;
 };
 
 exports.createTodo = async (req) => {
@@ -36,13 +38,13 @@ exports.createTodo = async (req) => {
     taskName: req.body.taskName,
     isCompleted: false
   };
-  if (req.file !== "") {
-    const fileDestination = path.join(req?.file?.path.split("/")[0], `${req?.file?.path.split("/")[1]}`, `${req?.file?.path.split("/")[2]}`);
-    await uploadAndDeleteInDisk(fileDestination, `todos/images/${req?.file?.path.split("/")[2]}`);
-    payload = { ...payload, referencePath: `todos/images/${req?.file?.path.split("/")[2]}` };
+  if (req.file) {
+    const fileDestination = path.join(req?.file?.path.split("\\")[0], req?.file?.path.split("\\")[1], req?.file?.path.split("\\")[2]);
+    await uploadAndDeleteInDisk(fileDestination, `todos/images/${req?.file?.path.split("\\")[2]}`);
+    payload = { ...payload, referencePath: `todos/images/${req?.file?.path.split("\\")[2]}` };
   }
   await addCollection("todos", payload);
-  const newlyCreatedTodo = readCollection("todos", { taskName: req.body.taskName });
+  const newlyCreatedTodo = await readCollection("todos", { taskName: req.body.taskName });
   return newlyCreatedTodo.id;
 };
 

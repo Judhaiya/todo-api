@@ -34,3 +34,14 @@ exports.getDownlodableUrl = async (filepath) => {
     throw new Error(err.message);
   }
 };
+
+exports.downloadFileFromBucket = async (bucketLocation, downloadLocation) => {
+  console.log(bucketLocation, downloadLocation, "bucket location", "downloadlocation");
+  try {
+    const res = bucket.file(bucketLocation).download({ destination: downloadLocation });
+    return res;
+  } catch (err) {
+    console.error(err);
+    throw new Error(err.message);
+  }
+};
