@@ -19,7 +19,7 @@ exports.deleteCollection = async (name, payload) => {
 };
 
 exports.getAllCollection = async (name) => {
-  await collectionGroup[`${name}`].find({});
+  return await collectionGroup[`${name}`].find({});
 };
 
 exports.updateCollection = async (name, payload) => {

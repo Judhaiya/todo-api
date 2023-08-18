@@ -6,7 +6,7 @@ const { baseUrl } = require("../../utils/baseUrl");
 const fs = require("fs");
 const { convertToBase64 } = require("../../services/convertToBase64");
 const { downloadFileFromBucket } = require("../../services/firebase/actionFunctions");
-const apiNegative = require("../integration/apiNegative");
+const { apiNegative } = require("../integration/apiNegative");
 const path = require("path");
 const { deleteFileInDisk } = require("../../services/fileUtility");
 
@@ -97,19 +97,19 @@ async function createTodoAndGetId(token) {
   const newlyCreatedTodo = await getTodoById(createTodoResponse.body.todo.id, token);
   return newlyCreatedTodo;
 }
-async function checkIfTokenPassed(method, url, payloadData) {
+async function checkIfTokenPassed(payloadData) {
+  const { method, url, payload } = payloadData;
   if (method === "get") {
-    if (payloadData !== null) {
-      const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
+    if (payload !== null) {
+      const res = await chai.request(baseUrl.local.SERVER_URL).get(url)
         .send(payloadData);
       expect(res.status).to.equal(400);
       expect(res.body.msg).to.equal("jwt must be provided");
       return;
     }
-    const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url);
+    const res = await chai.request(baseUrl.local.SERVER_URL).get(url);
     expect(res.status).to.equal(400);
     expect(res.body.msg).to.equal("jwt must be provided");
-    return;
   }
   const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
     .send(payloadData);
@@ -117,10 +117,9 @@ async function checkIfTokenPassed(method, url, payloadData) {
   expect(res.body.msg).to.equal("jwt must be provided");
 }
 
-describe("fetching specific todo by their id", () => {
+describe("fetchingTodoById", () => {
   describe("test cases will be passed in the below scenarios", () => {
     let token;
-    let requiredId;
     let todoWithImageId;
     let todoWithoutImageId;
     beforeEach(async () => {
@@ -128,27 +127,25 @@ describe("fetching specific todo by their id", () => {
       // signup and getToken
       token = await createAccount(token);
       for (const todoData of testTodoDatas) {
-        let createTodoResponse;
-        if (todoData.image !== "") {
-          createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
+        if (todoData.image !== undefined) {
+          const filePath = path.join(todoData.image.split("/")[2], todoData.image.split("/")[3], todoData.image.split("/")[4]);
+          const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
             .post("/api/todos/createTodo")
-            .send(todoData)
+            .field(todoData)
             .type("form")
-            .attach("image", fs.readFileSync(todoData?.image), "img-1.jpg")
+            .attach("image", fs.readFileSync(filePath), filePath)
             .set({ Authorization: `Bearer ${token}` });
           expect(createTodoResponse.status).to.equal(200);
-          todoWithImageId = createTodoResponse.body.todo.id;
+          todoWithImageId = createTodoResponse.body.todoId;
           return todoWithImageId;
         }
-        createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
+        const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
           .post("/api/todos/createTodo")
-          .send(todoData)
+          .field({ taskName: todoData.taskName })
           .type("form")
           .set({ Authorization: `Bearer ${token}` });
         expect(createTodoResponse.status).to.equal(200);
-        const getAllTodoResponse = await getAllTodos(token);
-        expect(getAllTodoResponse.status).to.equal(200);
-        todoWithoutImageId = createTodoResponse.body.todo.id;
+        todoWithoutImageId = createTodoResponse.body.todoId;
       }
     });
     it("should give the expected title", async () => {
@@ -164,32 +161,31 @@ describe("fetching specific todo by their id", () => {
     it("should give the expected image", async () => {
       const getTodoResponse = await getTodoById(todoWithImageId, token);
       expect(getTodoResponse.body.todo.taskName).to.equal(testTodoDatas[1].taskName);
-      checkForUploadedImg(getTodoResponse.body.todo.imageUrl, "./assets/img-1.jpg");
+      const fileDownloadPath = path.join("tests", "uploads", getTodoResponse.body.todo.referencePath.split("/")[2]);
+      await downloadFileFromBucket(getTodoResponse.body.todo.referencePath, fileDownloadPath);
+      await checkForUploadedImg(fileDownloadPath, path.join(testTodoDatas[1].image.split("/")[2], testTodoDatas[1].image.split("/")[3], testTodoDatas[1].image.split("/")[4]));
+      deleteFileInDisk(fileDownloadPath);
     });
     it("should throw if it cannot find that particular id", async () => {
       const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
         .delete("/api/todos/deleteTodo")
         .set({ Authorization: `Bearer ${token}` })
-        .send({ id: requiredId });
+        .send({ id: todoWithoutImageId });
       expect(deleteTodoResponse.status).to.equal(200);
-      try {
-        await chai.request(baseUrl.local.SERVER_URL)
-          .get("/api/todos/getTodo")
-          .query({ id: requiredId })
-          .set({ Authorization: `Bearer ${token}` });
-      }
-      catch (err) {
-        expect(err.code).to.equal(400);
-        expect(err.msg).to.equal("Cannot find todo with the provided id,Invalid id");
-        expect(err.name).to.equal("request error");
-      }
+      expect(deleteTodoResponse.body.msg).to.equal("todo has been deleted successfully");
+      const res = await chai.request(baseUrl.local.SERVER_URL)
+        .get("/api/todos/getSingleTodo")
+        .query({ id: todoWithoutImageId })
+        .set({ Authorization: `Bearer ${token}` });
+      expect(res.body.msg).to.equal("Cannot find todo with the provided id,Invalid id");
+      expect(res.status).to.equal(400);
     });
     it("form validation on entering invalid fields", async () => {
       const negativePayload = {
-        url: "/api/todos/getTodo",
+        url: "/api/todos/getSingleTodo",
         method: "get",
         headers: { Authorization: `Bearer ${token}` },
-        payload: { key: "id", wrongValues: ["", 123456], correctValue: requiredId }
+        payloadDetails: [{ key: "_id", wrongValues: ["", 123456], correctValue: todoWithoutImageId }]
       };
 
       await apiNegative(negativePayload);
@@ -197,8 +193,8 @@ describe("fetching specific todo by their id", () => {
     it("throw error if token is not passed", async () => {
       const tokenValidationPayload = {
         method: "get",
-        url: "/api/todos/getTodo",
-        payload: { id: requiredId }
+        url: "/api/todos/getSingleTodo",
+        payload: { id: todoWithoutImageId }
       };
       await checkIfTokenPassed(tokenValidationPayload);
     });
@@ -209,37 +205,48 @@ describe("fetching specific todo by their id", () => {
   });
 });
 
-describe("fetching all todos", () => {
+describe("fetchingAllTodos", () => {
   describe("test cases will be passed in the below scenarios", () => {
     let token;
     beforeEach(async () => {
       await connectDB();
       token = await createAccount(token);
       const getAllTodoResponse = await getAllTodos(token);
-      expect(getAllTodoResponse.status).to.equal(200);
-      if (getAllTodoResponse.body.todos.length > 0) {
-        const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
-          .delete("/api/todos/deleteTodos")
-          .set({ Authorization: `Bearer ${token}` });
-        expect(deleteTodoResponse.status).to.equal(200);
+      if (getAllTodoResponse.body.todos !== undefined) {
+        await deleteTodoResponse(token);
       }
       for (const todoData of testTodoDatas) {
+        if (todoData.image !== undefined) {
+          const filePath = path.join(todoData.image.split("/")[2], todoData.image.split("/")[3], todoData.image.split("/")[4]);
+          const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
+            .post("/api/todos/createTodo")
+            .field(todoData)
+            .type("form")
+            .attach("image", fs.readFileSync(filePath), filePath)
+            .set({ Authorization: `Bearer ${token}` });
+          expect(createTodoResponse.status).to.equal(200);
+          return;
+        }
         const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
           .post("/api/todos/createTodo")
-          .send(todoData)
+          .field({ taskName: todoData.taskName })
           .type("form")
-          .attach("image", fs.readFileSync(todoData?.image), "img-1.jpg")
           .set({ Authorization: `Bearer ${token}` });
         expect(createTodoResponse.status).to.equal(200);
-      }
+      };
     });
     it("check if it is fetching all the todos from the db ", async () => {
       const getAllTodoResponse = await getAllTodos(token);
-      const todoList = getAllTodoResponse.body.todos.map(({ id, ...rest }) => {
-        return rest;
+      const todoList = getAllTodoResponse.body.todos.map(({ taskName }) => {
+        return { taskName };
       });
-      expect(todoList).to.have.deep.members(testTodoDatas);
+      const testTodosTitle = testTodoDatas.map(testTodoData => {
+        return {
+          taskName: testTodoData.taskName
+        };
+      });
       expect(getAllTodoResponse.status).to.equal(200);
+      expect(todoList).to.have.deep.members(testTodosTitle);
     });
     it("throw error if token is not passed", async () => {
       const tokenValidationPayload = {
@@ -251,6 +258,7 @@ describe("fetching all todos", () => {
     });
     afterEach(async () => {
       await deleteUserAccount(token);
+      await deleteTodoResponse(token);
     });
   });
 });
@@ -283,7 +291,8 @@ describe("create todos", () => {
         }
         const createTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
           .post("/api/todos/createTodo")
-          .send({ taskName: todoData.taskName })
+          .field({ taskName: todoData.taskName })
+          .type("form")
           .set({ Authorization: `Bearer ${token}` });
         expect(createTodoResponse.status).to.equal(200);
         const newTodo = await getTodoById(createTodoResponse.body.todoId, token);
@@ -296,7 +305,7 @@ describe("create todos", () => {
         url: "/api/todos/createTodo",
         payload: { taskName: testTodoDatas[0] }
       };
-      await checkIfTokenPassed("post", "/api/todos/createTodo", tokenValidationPayload);
+      await checkIfTokenPassed(tokenValidationPayload);
     });
     afterEach(async () => {
       await deleteUserAccount(token);
@@ -337,14 +346,14 @@ describe("update todos", () => {
     });
     it("form validation on entering invalid fields", async () => {
       const payloadData = [
-        { key: "id", wrongValues: ["", 123456], correctValue: newlyCreatedTodo.id },
+        { key: "_id", wrongValues: ["", 123456], correctValue: newlyCreatedTodo.id },
         { key: "taskName", wrongValues: [], correctValue: "clean desk" }
       ];
       const negativePayload = {
         url: "/api/todos/updateTodo",
         method: "patch",
         headers: { Authorization: `Bearer ${token}` },
-        payload: payloadData
+        payloadDetails: payloadData
       };
       await apiNegative(negativePayload);
     });
@@ -396,7 +405,7 @@ describe("delete todo by id", () => {
         url: "/api/todos/deleteTodo",
         method: "delete",
         headers: { Authorization: `Bearer ${token}` },
-        payload: { key: "id", wrongValues: ["", 123456], correctValue: newlyCreatedTodo.id }
+        payloadDetails: [{ key: "_id", wrongValues: ["", 123456], correctValue: newlyCreatedTodo.id }]
       };
       await apiNegative(negativePayload);
     });

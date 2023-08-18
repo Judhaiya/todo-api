@@ -47,7 +47,7 @@ const getUserSchema = (path) => {
       case "/updateTodo":
         requiredSchema = {
           properties: {
-            id: { type: "objectId" },
+            id: { type: "string" },
             taskName: { type: "string" },
             image: { type: "string" }
           },
@@ -57,7 +57,7 @@ const getUserSchema = (path) => {
       case "/deleteTodo":
         requiredSchema = {
           properties: {
-            id: { type: "objectId" }
+            id: { type: "string" }
           },
           required: ["id"]
         };
