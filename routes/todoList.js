@@ -42,7 +42,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.post("/createTodo", upload.single("image"), validateToken, validateUserSchema, async (req, res) => {
+router.post("/createTodo", validateToken, upload.single("image"), validateUserSchema, async (req, res) => {
   try {
     const newTodoId = await createNewTodo(req);
     res.status(200).json({ msg: "todo created successfully", todoId: newTodoId });
@@ -52,7 +52,7 @@ router.post("/createTodo", upload.single("image"), validateToken, validateUserSc
   }
 });
 
-router.patch("/updateTodo", validateToken, validateUserSchema, async (req, res) => {
+router.patch("/updateTodo", validateToken, upload.single("image"), validateUserSchema, async (req, res) => {
   try {
     await updateSingleTodo(req);
     res.status(200).json({ msg: "Details have been updated successfully" });
