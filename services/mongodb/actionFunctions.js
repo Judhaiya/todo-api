@@ -1,5 +1,6 @@
 const UsersData = require("./user");
 const TodoList = require("./todoList");
+
 const collectionGroup = {
   users: UsersData,
   todos: TodoList

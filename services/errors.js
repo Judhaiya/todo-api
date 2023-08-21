@@ -12,7 +12,6 @@ exports.requestError = (msg) => {
   error.msg = msg;
   return error;
 };
-
 exports.errorHandler = (err, res) => {
   const { name, msg } = err;
   switch (name) {
@@ -22,8 +21,10 @@ exports.errorHandler = (err, res) => {
     case "request error":
       res.status(400).json({ msg });
       break;
+    case "CastError":
+      res.status(400).json({ msg: "Invalid id format" });
+      break;
     default:
-      console.error(err, "error 500");
       res.status(500).json({ msg: "something went wrong" });
   }
 };

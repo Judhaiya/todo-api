@@ -7,7 +7,7 @@ const expect = chai.expect;
 
 module.exports.apiNegative = async function apiNegative(negativePayload) {
   const { url, payloadDetails, method, headers } = negativePayload;
-  const correctDetails = payloadDetails.reduce((prev, cur) => {
+  const apiPayload = payloadDetails.reduce((prev, cur) => {
     return Object.assign(prev, { [cur.key]: cur.correctValue });
   }, {});
   for (const formData of payloadDetails) {
@@ -15,16 +15,19 @@ module.exports.apiNegative = async function apiNegative(negativePayload) {
       if (method === "get") {
         const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
           .set(headers !== null && headers)
-          .query({ ...correctDetails, [formData.key]: invalidField });
+          .query({
+            ...apiPayload, [formData.key]: invalidField
+          });
         expect(res.statusCode).to.equal(400);
-        return;
+      } else {
+        const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
+          .set(headers !== null && headers)
+          .send({ ...apiPayload, [formData.key]: invalidField });
+        expect(res.statusCode).to.equal(400);
       }
-      const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
-        .send({ ...correctDetails, [formData.key]: invalidField })
-        .set(headers !== null && headers);
-      expect(res.statusCode).to.equal(400);
     }
-    const { [formData.key]: rest, ...correctFields } = correctDetails;
+    const { [formData.key]: key, ...correctFields } = apiPayload;
+    if (!correctFields) return;
     const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
       .send(correctFields)
       .set(headers !== null && headers);

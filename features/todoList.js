@@ -82,7 +82,7 @@ exports.deleteTodo = async (req) => {
   const getMatchingCollection = readCollection("todos", { _id: req.body.id });
   if (!getMatchingCollection) {
     throw requestError("todo id doesn't exists.Please enter valid id");
-  }
+  };
   await deleteCollection("todos", { _id: req.body.id });
 };
 
