@@ -20,7 +20,7 @@ router.get("/getAllTodos", validateToken, async (req, res) => {
   }
 });
 
-router.get("/getSingleTodo", validateToken, async (req, res) => {
+router.get("/getSingleTodo", validateToken, validateUserSchema, async (req, res) => {
   try {
     const singleTodo = await getSingleTodo(req);
     res.status(200).json({ todo: singleTodo });

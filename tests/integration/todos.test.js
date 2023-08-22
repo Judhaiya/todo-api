@@ -344,19 +344,19 @@ describe("updateTodoById", () => {
       await checkForUploadedImg(fileDownloadPath, filePath);
       deleteFileInDisk(fileDownloadPath);
     });
-    // it("form validation on entering invalid fields", async () => {
-    //   const payloadData = [
-    //     { key: "id", wrongValues: ["", 123456], correctValue: newlyCreatedTodo.body.todo._id },
-    //     { key: "taskName", wrongValues: [], correctValue: "clean desk" }
-    //   ];
-    //   const negativePayload = {
-    //     url: "/api/todos/updateTodo",
-    //     method: "patch",
-    //     headers: { Authorization: `Bearer ${token}` },
-    //     payloadDetails: payloadData
-    //   };
-    //   await apiNegative(negativePayload);
-    // });
+    it("form validation on entering invalid fields", async () => {
+      const payloadData = [
+        { key: "id", wrongValues: ["", 123456], correctValue: newlyCreatedTodo.body.todo._id },
+        { key: "taskName", wrongValues: [], correctValue: "clean desk" }
+      ];
+      const negativePayload = {
+        url: "/api/todos/updateTodo",
+        method: "patch",
+        headers: { Authorization: `Bearer ${token}` },
+        payloadDetails: payloadData
+      };
+      await apiNegative(negativePayload);
+    });
     it("throw error if token is not passed", async () => {
       const tokenValidationPayload = {
         method: "patch",
@@ -400,15 +400,15 @@ describe("deleteTodoById", () => {
         expect(err.name).to.equal("request error");
       }
     });
-    // it("form validation on entering invalid fields", async () => {
-    //   const negativePayload = {
-    //     url: "/api/todos/deleteTodo",
-    //     method: "delete",
-    //     headers: { Authorization: `Bearer ${token}` },
-    //     payloadDetails: [{ key: "id", wrongValues: ["", 12345], correctValue: newlyCreatedTodo.body.todo._id }]
-    //   };
-    //   await apiNegative(negativePayload);
-    // });
+    it("form validation on entering invalid fields", async () => {
+      const negativePayload = {
+        url: "/api/todos/deleteTodo",
+        method: "delete",
+        headers: { Authorization: `Bearer ${token}` },
+        payloadDetails: [{ key: "id", wrongValues: ["", 12345], correctValue: newlyCreatedTodo.body.todo._id }]
+      };
+      await apiNegative(negativePayload);
+    });
     it("throw error if token is not passed", async () => {
       const tokenValidationPayload = {
         method: "delete",

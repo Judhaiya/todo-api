@@ -27,7 +27,6 @@ module.exports.apiNegative = async function apiNegative(negativePayload) {
       }
     }
     const { [formData.key]: key, ...correctFields } = apiPayload;
-    if (!correctFields) return;
     const res = await chai.request(baseUrl.local.SERVER_URL)[`${method}`](url)
       .send(correctFields)
       .set(headers !== null && headers);

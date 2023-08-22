@@ -21,9 +21,6 @@ exports.errorHandler = (err, res) => {
     case "request error":
       res.status(400).json({ msg });
       break;
-    case "CastError":
-      res.status(400).json({ msg: "Invalid id format" });
-      break;
     default:
       res.status(500).json({ msg: "something went wrong" });
   }
