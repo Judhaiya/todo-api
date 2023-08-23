@@ -4,11 +4,10 @@ const chaiHttp = require("chai-http");
 const { connectDB } = require("../../utils/databaseConnection");
 const { baseUrl } = require("../../utils/baseUrl");
 const fs = require("fs");
-const { convertToBase64 } = require("../../services/convertToBase64");
-const { downloadFileFromBucket } = require("../../services/firebase/actionFunctions");
+const { checkForUploadedImg } = require("../features/uploadImageCheck");
 const { apiNegative } = require("../integration/apiNegative");
 const path = require("path");
-const { deleteFileInDisk } = require("../../services/fileUtility");
+
 
 dotenv.config();
 chai.use(chaiHttp);
@@ -35,12 +34,6 @@ async function getTodoById(requiredId, token) {
     .set({ Authorization: `Bearer ${token}` })
     .query({ id: requiredId });
   return getTodoResponse;
-}
-
-async function checkForUploadedImg(imageUrl, imgPath) {
-  const base64responseUrl = convertToBase64(imageUrl);
-  const base64userUploadedImg = convertToBase64(imgPath);
-  expect(base64responseUrl).to.equal(base64userUploadedImg);
 }
 
 async function createAccount(token) {
@@ -158,9 +151,7 @@ describe("fetchingTodoById", () => {
       const getTodoResponse = await getTodoById(todoWithImageId, token);
       expect(getTodoResponse.body.todo.taskName).to.equal(testTodoDatas[1].taskName);
       const fileDownloadPath = path.join("tests", "uploads", getTodoResponse.body.todo.referencePath.split("/")[2]);
-      await downloadFileFromBucket(getTodoResponse.body.todo.referencePath, fileDownloadPath);
-      await checkForUploadedImg(fileDownloadPath, path.join(testTodoDatas[1].image.split("/")[2], testTodoDatas[1].image.split("/")[3], testTodoDatas[1].image.split("/")[4]));
-      deleteFileInDisk(fileDownloadPath);
+      await checkForUploadedImg(fileDownloadPath, path.join(testTodoDatas[1].image.split("/")[2], testTodoDatas[1].image.split("/")[3], testTodoDatas[1].image.split("/")[4]), getTodoResponse.body.todo.referencePath);
     });
     it("should throw if it cannot find that particular id", async () => {
       const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
@@ -279,9 +270,7 @@ describe("createTodos", () => {
           expect(createTodoResponse.status).to.equal(200);
           const newTodo = await getTodoById(createTodoResponse.body.todoId, token);
           const fileDownloadPath = path.join("tests", "uploads", newTodo.body.todo.referencePath.split("/")[2]);
-          await downloadFileFromBucket(newTodo.body.todo.referencePath, fileDownloadPath);
-          await checkForUploadedImg(fileDownloadPath, path.join("utils", "assets", "img-1.jpg"));
-          deleteFileInDisk(fileDownloadPath);
+          await checkForUploadedImg(fileDownloadPath, path.join("utils", "assets", "img-1.jpg"), newTodo.body.todo.referencePath);
           expect(newTodo.body.todo.taskName).to.equal(todoData.taskName);
           return;
         }
@@ -340,9 +329,7 @@ describe("updateTodoById", () => {
       expect(updateTodoResponse.status).to.eql(200);
       const getUpdatedTodo = await getTodoById(newlyCreatedTodo.body.todo._id, token);
       const fileDownloadPath = path.join("tests", "uploads", getUpdatedTodo.body.todo.referencePath.split("/")[2]);
-      await downloadFileFromBucket(getUpdatedTodo.body.todo.referencePath, fileDownloadPath);
-      await checkForUploadedImg(fileDownloadPath, filePath);
-      deleteFileInDisk(fileDownloadPath);
+      await checkForUploadedImg(fileDownloadPath, filePath, getUpdatedTodo.body.todo.referencePath);
     });
     it("form validation on entering invalid fields", async () => {
       const payloadData = [

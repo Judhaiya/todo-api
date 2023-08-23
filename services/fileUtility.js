@@ -1,5 +1,4 @@
 const fs = require("fs");
-const { uploadFile } = require("../services/firebase/actionFunctions");
 
 exports.deleteFileInDisk = (filePath) => {
   try {

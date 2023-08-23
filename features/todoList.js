@@ -44,10 +44,7 @@ exports.createTodo = async (req) => {
     createdAt: new Date()
   };
   if (req.file) {
-    console.log(req.file, "in req.todo");
     const fileDestination = path.join(normalizePath(req.file.path).split("\\")[0], normalizePath(req.file.path).split("\\")[1], normalizePath(req.file.path).split("\\")[2]);
-    const fileExistsTwo = fs.existsSync(fileDestination);
-    console.log(fileExistsTwo, fileDestination, "file exists in create todo");
     await uploadFile(fileDestination, `todos/images/${normalizePath(req.file.path).split("\\")[2]}`);
     payload = { ...payload, referencePath: `todos/images/${normalizePath(req.file.path).split("\\")[2]}` };
   }

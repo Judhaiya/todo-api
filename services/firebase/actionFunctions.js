@@ -11,7 +11,9 @@ exports.uploadFile = async (fileDestination, bucketDestination) => {
     await bucket.upload(fileDestination, {
       destination: bucketDestination
     });
-    deleteFileInDisk(fileDestination);
+    if (fileDestination.split("/")[0] === "tmp") {
+      deleteFileInDisk(fileDestination);
+    }
   } catch (err) {
     console.error(err.message);
     throw new Error(err.message);
