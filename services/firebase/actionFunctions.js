@@ -1,14 +1,17 @@
 const { bucket } = require("./configuration");
 const { getStorage, getDownloadURL } = require("firebase-admin/storage");
 const dotenv = require("dotenv");
+const { deleteFileInDisk } = require("../../services/fileUtility");
 
 dotenv.config();
 
 exports.uploadFile = async (fileDestination, bucketDestination) => {
+  console.log(fileDestination, bucketDestination, "filedestination");
   try {
     await bucket.upload(fileDestination, {
       destination: bucketDestination
     });
+    deleteFileInDisk(fileDestination);
   } catch (err) {
     console.error(err.message);
     throw new Error(err.message);

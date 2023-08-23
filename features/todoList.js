@@ -1,8 +1,9 @@
 const { getAllCollection, addCollection, readCollection, updateCollection, deleteCollection, deleteAllDocument } = require("../services/mongodb/actionFunctions");
 const { requestError } = require("../services/errors");
 const { getDownlodableUrl, deleteFileInStorage } = require("../services/firebase/actionFunctions");
-const { uploadAndDeleteInDisk } = require("../services/fileUtility");
+const { uploadFile } = require("../services/firebase/actionFunctions");
 const { normalizePath } = require("../services/formatter");
+const fs = require("fs");
 
 const path = require("path");
 
@@ -43,8 +44,11 @@ exports.createTodo = async (req) => {
     createdAt: new Date()
   };
   if (req.file) {
+    console.log(req.file, "in req.todo");
     const fileDestination = path.join(normalizePath(req.file.path).split("\\")[0], normalizePath(req.file.path).split("\\")[1], normalizePath(req.file.path).split("\\")[2]);
-    await uploadAndDeleteInDisk(fileDestination, `todos/images/${normalizePath(req.file.path).split("\\")[2]}`);
+    const fileExistsTwo = fs.existsSync(fileDestination);
+    console.log(fileExistsTwo, fileDestination, "file exists in create todo");
+    await uploadFile(fileDestination, `todos/images/${normalizePath(req.file.path).split("\\")[2]}`);
     payload = { ...payload, referencePath: `todos/images/${normalizePath(req.file.path).split("\\")[2]}` };
   }
   await addCollection("todos", payload);
@@ -70,7 +74,7 @@ exports.updateTodo = async (req) => {
     await deleteFileInStorage(getMatchingCollection?.referencePath);
   }
   const fileDestination = path.join(normalizePath(req.file.path).split("\\")[0], normalizePath(req.file.path).split("\\")[1], normalizePath(req.file.path).split("\\")[2]);
-  await uploadAndDeleteInDisk(fileDestination, `todos/images/${normalizePath(req.file.path).split("\\")[2]}`);
+  await uploadFile(fileDestination, `todos/images/${normalizePath(req.file.path).split("\\")[2]}`);
   payload = {
     filter: { _id: req.body.id },
     update: { taskName: req.body.taskName, referencePath: `todos/images/${normalizePath(req.file.path).split("\\")[2]}` }
