@@ -82,11 +82,11 @@ const getUserSchema = (path) => {
     console.error(err, "invalid path");
   }
 };
-function preValidateProperty(req) {
-  if (req.path !== "/updateTodo") {
+function preValidateProperty(path, file, taskName) {
+  if (path !== "/updateTodo") {
     return;
   }
-  if (req.file === undefined && req.body.taskName === undefined) {
+  if (file === undefined && taskName === undefined) {
     throw validationError("image or taskName shouldn't be empty");
   }
 }
@@ -98,7 +98,7 @@ exports.validateUserSchema = async (req, res, next) => {
       userValue = req.query;
     }
     if (validateSchema.validate(userValue, getUserSchema(req.path)
-      , { preValidateProperty: preValidateProperty(req) }).errors.length > 0) {
+      , { preValidateProperty: preValidateProperty(req.path, req.file, req.body.taskName) }).errors.length > 0) {
       const errorMsg = validateSchema.validate(userValue, getUserSchema(req.path)).errors.map(err => err.stack);
       throw validationError(errorMsg?.toString());
     }

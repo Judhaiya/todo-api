@@ -13,20 +13,21 @@ const sampleTodoData = [
     taskName: "grooming",
     image: "../../utils/assets/img-3.jpg"
   }
-]
+];
 
-describe("fetching all todo works", async () => {
-  let todoList = await getAllCollection("todos");
-  if (todoList.length > 0) { await deleteAllTodos("todos"); }
-  beforeEach("", async () => {
+describe("fetchingAllTodos", async () => {
+  let todoList;
+  beforeEach(async () => {
     await connectDB();
+    todoList = await getAllCollection("todos");
+    if (todoList.length > 0) { await deleteAllTodos("todos"); }
     for (const testData of sampleTodoData) {
       let payload;
       if (testData.image !== undefined) {
         payload = {
           body: { taskName: testData.taskName },
-          file: { path: path.join("utils", "assets", "img-3.jpg") }
-        }
+          file: { path: path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]) }
+        };
         await createTodo(payload);
       } else {
         payload = { body: { taskName: testData.taskName } };
@@ -36,11 +37,12 @@ describe("fetching all todo works", async () => {
   })
   it("passess if we get the expected todo taskName and image", async () => {
     let todoTaskNameList = [];
-    const getTodoCollection = await readCollection("todos");
+    const getTodoCollection = await getAllCollection("todos");
     for (const todo of getTodoCollection) {
       if (todo.image !== undefined) {
         const fileDownloadPath = path.join("tests", "uploads", todo.referencePath.split("/")[2]);
-        await checkForUploadedImg(fileDownloadPath, path.join(sampleTodoData.image.split("/")[2], sampleTodoData.image.split("/")[3], sampleTodoData.image.split("/")[4]), todo.referencePath);
+        await checkForUploadedImg(fileDownloadPath, path.join(sampleTodoData[1].image.split("/")[2], sampleTodoData[1].image.split("/")[3], sampleTodoData[1].image.split("/")[4]),
+          todo.referencePath);
       }
       todoTaskNameList = [...todoTaskNameList, { taskName: todo.taskName }]
     }
@@ -49,7 +51,7 @@ describe("fetching all todo works", async () => {
         taskName: testTodoData.taskName
       };
     });
-    expect(todoList).to.have.deep.members(testTodosTitle);
+    expect(todoTaskNameList).to.have.deep.members(testTodosTitle);
   });
   it("throw error if we try to fetch empty documents from todo collection", async () => {
     try {
@@ -66,10 +68,10 @@ describe("fetching all todo works", async () => {
     if (todoList.length > 0) {
       await deleteAllDocument("todos");
     }
-  })
+  });
 });
 
-describe("fetching todo by id", async () => {
+describe("fetchingTodoById", async () => {
   let todoList;
   let todoWithImageId;
   let todoWithoutImageId;
@@ -104,7 +106,8 @@ describe("fetching todo by id", async () => {
     expect(todoDetails).to.have.property("createdAt");
     expect(todoDetails).to.have.property("isCompleted");
     const fileDownloadPath = path.join("tests", "uploads", todoDetails.referencePath.split("/")[2]);
-    await checkForUploadedImg(fileDownloadPath, path.join(sampleTodoData.image.split("/")[2], sampleTodoData.image.split("/")[3], sampleTodoData.image.split("/")[4]), todoDetails.referencePath);
+    await checkForUploadedImg(fileDownloadPath, path.join(sampleTodoData[1].image.split("/")[2], sampleTodoData[1].image.split("/")[3], sampleTodoData[1].image.split("/")[4]),
+      todoDetails.referencePath);
   })
   it("passess if it fetches the user entered taskName", async () => {
     const payload = {
@@ -125,22 +128,22 @@ describe("fetching todo by id", async () => {
       }
     }
     try {
-      await fetchingSingleTodo(payload)
+      await fetchingSingleTodo(payload);
     } catch (err) {
       expect(err.name).to.equal("request error");
-      expect(err.status).to.equal(400);
+      expect(err.code).to.equal(400);
       expect(err.msg).to.equal("Cannot find todo with the provided id,Invalid id");
     }
   })
-  afterEach("", async () => {
+  afterEach(async () => {
     todoList = await getAllCollection("todos");
     if (todoList.length > 0) {
       await deleteAllDocument("todos");
     }
-  })
-})
+  });
+});
 
-describe("create todo", () => {
+describe("createTodo", () => {
   let todoList;
   beforeEach(async () => {
     await connectDB();
@@ -158,13 +161,12 @@ describe("create todo", () => {
         };
         const todoWithImageId = await createTodo(payload);
         todoDetails = await readCollection("todos", { taskName: testData.taskName });
-        expect(todoDetails._id).to.eql(todoWithImageId);
+        expect(todoDetails._id.toString()).to.eql(todoWithImageId);
       } else {
         payload = { body: { taskName: testData.taskName } };
         const todoWithoutImageId = await createTodo(payload);
         todoDetails = await readCollection("todos", { taskName: testData.taskName });
-        expect(todoDetails._id).to.eql(todoWithoutImageId);
-        ;
+        expect(todoDetails._id.toString()).to.eql(todoWithoutImageId);
       };
     }
   });
@@ -176,7 +178,7 @@ describe("create todo", () => {
   })
 });
 
-describe("update todos", async () => {
+describe("updateTodoById", async () => {
   let todoList;
   let todoWithImageId;
   let todoWithoutImageId;
@@ -197,35 +199,31 @@ describe("update todos", async () => {
         todoWithoutImageId = await createTodo(payload);
       };
     }
-  })
+  });
 
   it("should get user updated taskName when we update the task", async () => {
     const payload = {
-      query: {
-        id: todoWithoutImageId
-      },
       body: {
-        taskName: "to mob"
+        taskName: "to mob",
+        id: todoWithoutImageId
       }
     };
+
     await updateTodo(payload);
-    const todoDetails = readCollection("todos", { _id: payload.query.id })
+    const todoDetails = await readCollection("todos", { _id: payload.body.id });
     expect(todoDetails.taskName).to.eql(payload.body.taskName);
-  })
-  it("should get user updated taskName when we update the task", async () => {
+  });
+  it("should get user updated image when we update the task", async () => {
     const payload = {
-      query: {
+      body: {
         id: todoWithImageId
       },
-      file: {
-        path: "../../utils/assets/img-2.jpg"
-      }
+      file: { path: path.join(sampleTodoData[1].image.split("/")[2], sampleTodoData[1].image.split("/")[3], sampleTodoData[1].image.split("/")[4]) }
     };
     await updateTodo(payload);
-    const todoDetails = readCollection("todos", { _id: payload.query.id })
-    expect(todoDetails.taskName).to.eql(payload.body.taskName);
+    const todoDetails = await readCollection("todos", { _id: payload.body.id });
     const fileDownloadPath = path.join("tests", "uploads", todoDetails.referencePath.split("/")[2]);
-    await checkForUploadedImg(fileDownloadPath, path.join("utils", "assets", "img-2.jpg"), todoDetails.referencePath);
+    await checkForUploadedImg(fileDownloadPath, payload.file.path, todoDetails.referencePath);
   });
   it("throw error if we enter invalid id", async () => {
     await deleteCollection("todos", { _id: todoWithoutImageId });
@@ -241,7 +239,7 @@ describe("update todos", async () => {
       await updateTodo(payload);
     } catch (err) {
       expect(err.name).to.equal("request error");
-      expect(err.status).to.equal(400);
+      expect(err.code).to.equal(400);
       expect(err.msg).to.equal("todo doesn't exists");
     }
   })
@@ -252,7 +250,7 @@ describe("update todos", async () => {
     };
   })
 });
-describe("delete todo by id", () => {
+describe("deleteTodoById", () => {
   let todoId;
   let todoList;
   beforeEach(async () => {
@@ -273,7 +271,7 @@ describe("delete todo by id", () => {
       }
     };
     await deleteTodo(payload);
-    expect(await readCollection("todos", { _id: todoId })).to.be.null
+    expect(await readCollection("todos", { _id: todoId })).to.be.null;
   });
   it("should throw error on providing invalid id", async () => {
     const payload = {
@@ -281,11 +279,12 @@ describe("delete todo by id", () => {
         id: todoId
       }
     };
+    await deleteTodo(payload);
     try {
       await deleteTodo(payload);
     } catch (err) {
       expect(err.name).to.equal("request error");
-      expect(err.status).to.equal(400);
+      expect(err.code).to.equal(400);
       expect(err.msg).to.equal("todo id doesn't exists.Please enter valid id");
     }
   });
@@ -327,9 +326,8 @@ describe("deleteAllTodos", () => {
       expect(err.name).to.equal("request error");
       expect(err.status).to.equal(400);
       expect(err.msg).to.equal("no todos in database");
-    }
-
-  })
+    };
+  });
   afterEach(async () => {
     todoList = await getAllCollection("todos");
     if (todoList.length > 0) {

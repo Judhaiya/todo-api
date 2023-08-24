@@ -3,8 +3,6 @@ const { requestError } = require("../services/errors");
 const { getDownlodableUrl, deleteFileInStorage } = require("../services/firebase/actionFunctions");
 const { uploadFile } = require("../services/firebase/actionFunctions");
 const { normalizePath } = require("../services/formatter");
-const fs = require("fs");
-
 const path = require("path");
 
 exports.fetchingTodos = async () => {
@@ -52,7 +50,6 @@ exports.createTodo = async (req) => {
   const newlyCreatedTodo = await readCollection("todos", { taskName: req.body.taskName });
   return newlyCreatedTodo.id;
 };
-
 exports.updateTodo = async (req) => {
   let payload;
   const getMatchingCollection = await readCollection("todos", { _id: req.body.id });
@@ -80,7 +77,7 @@ exports.updateTodo = async (req) => {
 };
 
 exports.deleteTodo = async (req) => {
-  const getMatchingCollection = readCollection("todos", { _id: req.body.id });
+  const getMatchingCollection = await readCollection("todos", { _id: req.body.id });
   if (!getMatchingCollection) {
     throw requestError("todo id doesn't exists.Please enter valid id");
   };

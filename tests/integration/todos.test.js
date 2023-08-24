@@ -151,7 +151,8 @@ describe("fetchingTodoById", () => {
       const getTodoResponse = await getTodoById(todoWithImageId, token);
       expect(getTodoResponse.body.todo.taskName).to.equal(testTodoDatas[1].taskName);
       const fileDownloadPath = path.join("tests", "uploads", getTodoResponse.body.todo.referencePath.split("/")[2]);
-      await checkForUploadedImg(fileDownloadPath, path.join(testTodoDatas[1].image.split("/")[2], testTodoDatas[1].image.split("/")[3], testTodoDatas[1].image.split("/")[4]), getTodoResponse.body.todo.referencePath);
+      await checkForUploadedImg(fileDownloadPath, path.join(testTodoDatas[1].image.split("/")[2], testTodoDatas[1].image.split("/")[3], testTodoDatas[1].image.split("/")[4]),
+        getTodoResponse.body.todo.referencePath);
     });
     it("should throw if it cannot find that particular id", async () => {
       const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)

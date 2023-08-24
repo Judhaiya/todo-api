@@ -5,10 +5,10 @@ const { deleteFileInDisk } = require("../../services/fileUtility");
 
 const expect = chai.expect;
 
-exports.checkForUploadedImg = async (downloadedPath, uploadedImgPath, referencePath) => {
-  await downloadFileFromBucket(referencePath, uploadedImgPath);
-  const base64responseUrl = convertToBase64(downloadedPath);
+exports.checkForUploadedImg = async (downloadPath, uploadedImgPath, referencePath) => {
+  await downloadFileFromBucket(referencePath, downloadPath);
+  const base64responseUrl = convertToBase64(downloadPath);
   const base64userUploadedImg = convertToBase64(uploadedImgPath);
   expect(base64responseUrl).to.equal(base64userUploadedImg);
-  deleteFileInDisk(uploadedImgPath);
+  deleteFileInDisk(downloadPath);
 };
