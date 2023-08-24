@@ -34,10 +34,24 @@ describe("fetching all todo works", async () => {
       }
     }
   })
-  it("", async () => {
-
+  it("passess if we get the expected todo taskName and image", async () => {
+    let todoTaskNameList = [];
+    const getTodoCollection = await readCollection("todos");
+    for (const todo of getTodoCollection) {
+      if (todo.image !== undefined) {
+        const fileDownloadPath = path.join("tests", "uploads", todo.referencePath.split("/")[2]);
+        await checkForUploadedImg(fileDownloadPath, path.join(sampleTodoData.image.split("/")[2], sampleTodoData.image.split("/")[3], sampleTodoData.image.split("/")[4]), todo.referencePath);
+      }
+      todoTaskNameList = [...todoTaskNameList, { taskName: todo.taskName }]
+    }
+    const testTodosTitle = getTodoCollection.map(testTodoData => {
+      return {
+        taskName: testTodoData.taskName
+      };
+    });
+    expect(todoList).to.have.deep.members(testTodosTitle);
   });
-  it("", async () => {
+  it("throw error if we try to fetch empty documents from todo collection", async () => {
     try {
       await deleteAllDocument("todos");
       await fetchingTodos();
@@ -47,7 +61,7 @@ describe("fetching all todo works", async () => {
       expect(err.msg).to.equal("No todos available please create a todo");
     }
   });
-  afterEach("", async () => {
+  afterEach(async () => {
     todoList = await getAllCollection("todos");
     if (todoList.length > 0) {
       await deleteAllDocument("todos");
@@ -321,5 +335,5 @@ describe("deleteAllTodos", () => {
     if (todoList.length > 0) {
       await deleteAllDocument("todos");
     };
-  })
-})
+  });
+});

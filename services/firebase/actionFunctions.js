@@ -6,7 +6,6 @@ const { deleteFileInDisk } = require("../../services/fileUtility");
 dotenv.config();
 
 exports.uploadFile = async (fileDestination, bucketDestination) => {
-  console.log(fileDestination, bucketDestination, "filedestination");
   try {
     await bucket.upload(fileDestination, {
       destination: bucketDestination
