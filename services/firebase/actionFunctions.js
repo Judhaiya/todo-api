@@ -2,6 +2,7 @@ const { bucket } = require("./configuration");
 const { getStorage, getDownloadURL } = require("firebase-admin/storage");
 const dotenv = require("dotenv");
 const { deleteFileInDisk } = require("../../services/fileUtility");
+const { requestError } = require("../errors");
 
 dotenv.config();
 
@@ -23,8 +24,8 @@ exports.deleteFileInStorage = async (bucketDestination) => {
   try {
     await bucket.file(bucketDestination).delete();
   } catch (err) {
-    console.error(err);
-    throw new Error(err.message);
+    console.error(err, "error in deleting file");
+    throw requestError(err?.errors[0]?.reason);
   }
 };
 
