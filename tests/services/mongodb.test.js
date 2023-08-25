@@ -109,6 +109,6 @@ describe("deleteAllDocument", () => {
   });
   it("test case passess  if it delete all the todos in the collection", async () => {
     await deleteAllDocument("todos");
-    expect(await getAllCollection("todos").to.eql(null));
+    expect(await getAllCollection("todos")).to.have.lengthOf(0);
   });
 });
