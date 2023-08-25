@@ -54,7 +54,7 @@ describe("readDataInTheCollection", () => {
   });
   it("passes the testcase while reading the collection ,the result shouldn't be null",
     async () => {
-      expect(await readCollection("users", { email: testUser.email })).not.to.eql(null)
+      expect(await readCollection("users", { email: testUser.email })).not.to.eql(null);
     });
   after(async () => {
     await deleteAllDocument("todos");
