@@ -22,7 +22,7 @@ const sampleTodoData = [
   }
 ];
 
-describe("addDataInTheDocument ", () => {
+describe("addDataInTheDocument", () => {
   before(async () => {
     await connectDB();
   });
@@ -34,12 +34,13 @@ describe("addDataInTheDocument ", () => {
 
   });
   after(async () => {
-    await deleteAllDocument("todos");
-  })
-})
+    await deleteAllDocument("users");
+  });
+});
 describe("deleteSingleDocument", () => {
   before(async () => {
     await connectDB();
+    await addCollection("users", testUser);
   });
   it("delete data function should delete user record in the database", async () => {
     await deleteCollection("users", { email: testUser.email });
@@ -50,16 +51,16 @@ describe("deleteSingleDocument", () => {
 describe("readDataInTheCollection", () => {
   before(async () => {
     await connectDB();
-    await addCollection(("users", { email: testUser.email }));
+    await addCollection("users", testUser);
   });
   it("passes the testcase while reading the collection ,the result shouldn't be null",
     async () => {
       expect(await readCollection("users", { email: testUser.email })).not.to.eql(null);
     });
   after(async () => {
-    await deleteAllDocument("todos");
-  })
-})
+    await deleteAllDocument("users");
+  });
+});
 describe("updateTodo", async () => {
   before(async () => {
     await connectDB();
@@ -78,17 +79,17 @@ describe("updateTodo", async () => {
     expect(await readCollection("todos", { taskName: sampleTodoData[1].taskName })).not.to.eql(null);
     after(async () => {
       await deleteAllDocument("todos");
-    })
+    });
   });
-})
+});
 describe("getAllTheTodos", () => {
   before(async () => {
     await connectDB();
-  });
-  it("getAllCollection", async () => {
     for (const todo of sampleTodoData) {
       await addCollection("todos", { taskName: todo.taskName });
     }
+  });
+  it("getAllCollection", async () => {
     const todoCollection = await getAllCollection("todos").map(({ taskName }) => {
       return { taskName };
     });
@@ -96,7 +97,7 @@ describe("getAllTheTodos", () => {
   })
   after(async () => {
     await deleteAllDocument("todos");
-  })
+  });
 });
 
 describe("deleteAllDocument", () => {
@@ -105,9 +106,9 @@ describe("deleteAllDocument", () => {
     for (const todo of sampleTodoData) {
       await addCollection("todos", { taskName: todo.taskName });
     }
-    it("test case passess  if it delete all the todos in the collection", async () => {
-      await deleteAllDocument("todos");
-      expect(await getAllCollection("todos").to.eql(null));
-    });
+  });
+  it("test case passess  if it delete all the todos in the collection", async () => {
+    await deleteAllDocument("todos");
+    expect(await getAllCollection("todos").to.eql(null));
   });
 });

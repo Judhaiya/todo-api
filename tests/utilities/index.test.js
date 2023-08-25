@@ -1,15 +1,21 @@
+const chai = require("chai");
 const { convertToBase64 } = require("../../services/convertToBase64");
 const { deleteFileInDisk } = require("../../services/fileUtility");
 const { normalizePath } = require("../../services/formatter");
 
 const path = require("path");
 const fs = require("fs");
+const expect = chai.expect;
+
 
 describe("base64Testing", () => {
-  it("passes if on decoding it should generate the expected image", () => {
+  it("passes if on decoding it should generate the expected image", async () => {
     const base64Image = convertToBase64(path.join("utils", "assets", "img-2.jpg"));
     const buffer = Buffer.from(base64Image, "base64");
-    fs.writeFileSync("decode-img.jpg", buffer);
+    fs.writeFileSync(path.join("tests", "uploads", "decode-img.jpg"), buffer);
+    const decodeImageBase64 = convertToBase64(path.join("tests", "uploads", "decode-img.jpg"));
+    expect(base64Image).to.eql(decodeImageBase64);
+    deleteFileInDisk(path.join("tests", "uploads", "decode-img.jpg"));
   });
 });
 
@@ -20,12 +26,12 @@ describe("deleteFileInDisk", () => {
     try {
       deleteFileInDisk(path.join("tests", "uploads", "sampletext.txt"));
     } catch (err) {
-      console.error();
+      expect(err.message).to.be.ok;
     }
   });
 });
 
-describe("format path", () => {
+describe("formatPath", () => {
   it("passes test case if it format file as expected", () => {
     expect(normalizePath("utils/assets/image")).to.eql("utils\\assets\\image");
   });
