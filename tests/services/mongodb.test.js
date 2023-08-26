@@ -62,21 +62,23 @@ describe("readDataInTheCollection", () => {
   });
 });
 describe("updateTodo", async () => {
-  before(async () => {
-    await connectDB();
-  });
-  it("works if it update data in the document", async () => {
-    const payload = {
-      filter: {
-        taskName: sampleTodoData[0].taskName
-      },
-      update: {
-        taskName: sampleTodoData[1].taskName
-      }
-    };
-    await addCollection("todos", { taskName: sampleTodoData[0].taskName });
-    await updateCollection("todos", payload);
-    expect(await readCollection("todos", { taskName: sampleTodoData[1].taskName })).not.to.eql(null);
+  describe("update todo works", () => {
+    before(async () => {
+      await connectDB();
+    });
+    it("works if it update data in the document", async () => {
+      const payload = {
+        filter: {
+          taskName: sampleTodoData[0].taskName
+        },
+        update: {
+          taskName: sampleTodoData[1].taskName
+        }
+      };
+      await addCollection("todos", { taskName: sampleTodoData[0].taskName });
+      await updateCollection("todos", payload);
+      expect(await readCollection("todos", { taskName: sampleTodoData[1].taskName })).not.to.eql(null);
+    });
     after(async () => {
       await deleteAllDocument("todos");
     });
@@ -90,11 +92,11 @@ describe("getAllTheTodos", () => {
     }
   });
   it("getAllCollection", async () => {
-    const todoCollection = await getAllCollection("todos").map(({ taskName }) => {
+    const todoCollection = [...await getAllCollection("todos")].map(({ taskName }) => {
       return { taskName };
     });
     expect(todoCollection).to.have.deep.members(sampleTodoData);
-  })
+  });
   after(async () => {
     await deleteAllDocument("todos");
   });

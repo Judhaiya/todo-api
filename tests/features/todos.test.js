@@ -4,6 +4,7 @@ const { getAllCollection, deleteAllDocument, readCollection, deleteCollection } 
 const { connectDB } = require("../../utils/databaseConnection");
 const { checkForUploadedImg } = require("../features/uploadImageCheck");
 const path = require("path");
+const fs = require("fs");
 const expect = chai.expect;
 const sampleTodoData = [
   {
@@ -24,9 +25,11 @@ describe("fetchingAllTodos", async () => {
     for (const testData of sampleTodoData) {
       let payload;
       if (testData.image !== undefined) {
+        fs.renameSync(path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]), path.join("tmp", "uploads", testData.image.split("/")[4]));
+        fs.copyFileSync(path.join("tmp", "uploads", testData.image.split("/")[4]), path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]));
         payload = {
           body: { taskName: testData.taskName },
-          file: { path: path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]) }
+          file: { path: path.join("tmp", "uploads", testData.image.split("/")[4]) }
         };
         await createTodo(payload);
       } else {
@@ -41,10 +44,10 @@ describe("fetchingAllTodos", async () => {
     for (const todo of getTodoCollection) {
       if (todo.image !== undefined) {
         const fileDownloadPath = path.join("tests", "uploads", todo.referencePath.split("/")[2]);
-        await checkForUploadedImg(fileDownloadPath, path.join(sampleTodoData[1].image.split("/")[2], sampleTodoData[1].image.split("/")[3], sampleTodoData[1].image.split("/")[4]),
+        await checkForUploadedImg(fileDownloadPath, path.join(todo.image.split("/")[2], todo.image.split("/")[3], todo.image.split("/")[4]),
           todo.referencePath);
       }
-      todoTaskNameList = [...todoTaskNameList, { taskName: todo.taskName }]
+      todoTaskNameList = [...todoTaskNameList, { taskName: todo.taskName }];
     }
     const testTodosTitle = getTodoCollection.map(testTodoData => {
       return {
@@ -82,9 +85,11 @@ describe("fetchingTodoById", async () => {
     for (const testData of sampleTodoData) {
       let payload;
       if (testData.image !== undefined) {
+        fs.renameSync(path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]), path.join("tmp", "uploads", testData.image.split("/")[4]));
+        fs.copyFileSync(path.join("tmp", "uploads", testData.image.split("/")[4]), path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]));
         payload = {
           body: { taskName: testData.taskName },
-          file: { path: path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]) }
+          file: { path: path.join("tmp", "uploads", testData.image.split("/")[4]) }
         };
         todoWithImageId = await createTodo(payload);
       } else {
@@ -155,9 +160,11 @@ describe("createTodo", () => {
       let payload;
       let todoDetails;
       if (testData.image !== undefined) {
+        fs.renameSync(path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]), path.join("tmp", "uploads", testData.image.split("/")[4]));
+        fs.copyFileSync(path.join("tmp", "uploads", testData.image.split("/")[4]), path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]));
         payload = {
           body: { taskName: testData.taskName },
-          file: { path: path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]) }
+          file: { path: path.join("tmp", "uploads", testData.image.split("/")[4]) }
         };
         const todoWithImageId = await createTodo(payload);
         todoDetails = await readCollection("todos", { taskName: testData.taskName });
@@ -189,9 +196,11 @@ describe("updateTodoById", async () => {
     for (const testData of sampleTodoData) {
       let payload;
       if (testData.image !== undefined) {
+        fs.renameSync(path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]), path.join("tmp", "uploads", testData.image.split("/")[4]));
+        fs.copyFileSync(path.join("tmp", "uploads", testData.image.split("/")[4]), path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]));
         payload = {
           body: { taskName: testData.taskName },
-          file: { path: path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]) }
+          file: { path: path.join("tmp", "uploads", testData.image.split("/")[4]) }
         };
         todoWithImageId = await createTodo(payload);
       } else {
@@ -214,16 +223,18 @@ describe("updateTodoById", async () => {
     expect(todoDetails.taskName).to.eql(payload.body.taskName);
   });
   it("should get user updated image when we update the task", async () => {
+    fs.renameSync(path.join("utils", "assets", "img-2.jpg"), path.join("tmp", "uploads", "img-2.jpg"));
+    fs.copyFileSync(path.join("tmp", "uploads", "img-2.jpg"), path.join("utils", "assets", "img-2.jpg"));
     const payload = {
       body: {
         id: todoWithImageId
       },
-      file: { path: path.join(sampleTodoData[1].image.split("/")[2], sampleTodoData[1].image.split("/")[3], sampleTodoData[1].image.split("/")[4]) }
+      file: { path: path.join("tmp", "uploads", "img-2.jpg") }
     };
     await updateTodo(payload);
     const todoDetails = await readCollection("todos", { _id: payload.body.id });
     const fileDownloadPath = path.join("tests", "uploads", todoDetails.referencePath.split("/")[2]);
-    await checkForUploadedImg(fileDownloadPath, payload.file.path, todoDetails.referencePath);
+    await checkForUploadedImg(fileDownloadPath, path.join("utils", "assets", "img-2.jpg"), todoDetails.referencePath);
   });
   it("throw error if we enter invalid id", async () => {
     await deleteCollection("todos", { _id: todoWithoutImageId });
@@ -304,9 +315,11 @@ describe("deleteAllTodos", () => {
     for (const testData of sampleTodoData) {
       let payload;
       if (testData.image !== undefined) {
+        fs.renameSync(path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]), path.join("tmp", "uploads", testData.image.split("/")[4]));
+        fs.copyFileSync(path.join("tmp", "uploads", testData.image.split("/")[4]), path.join(testData.image.split("/")[2], testData.image.split("/")[3], testData.image.split("/")[4]));
         payload = {
           body: { taskName: testData.taskName },
-          file: { path: path.join("utils", "assets", "img-3.jpg") }
+          file: { path: path.join("tmp", "uploads", testData.image.split("/")[4]) }
         };
       } else {
         payload = { body: { taskName: testData.taskName } };
