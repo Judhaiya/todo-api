@@ -10,3 +10,4 @@ admin.initializeApp({
 });
 
 exports.bucket = admin.storage().bucket();
+exports.db = admin.firestore();
