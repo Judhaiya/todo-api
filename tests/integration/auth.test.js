@@ -1,7 +1,7 @@
 const chai = require("chai");
 const dotenv = require("dotenv");
 const chaiHttp = require("chai-http");
-const { readCollection } = require("../../services/mongodb/actionFunctions");
+const { read } = require("../../services/firebase/firestore.queries");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { connectDB } = require("../../utils/databaseConnection");
@@ -67,7 +67,7 @@ describe("sign api prep", () => {
   describe("when signup is called", () => {
     before(async () => {
       await connectDB();
-      const existingUser = await readCollection("users", { email: userDetails.email });
+      const existingUser = await read.single("users", { email: userDetails.email });
       if (existingUser) {
         const loginResponse = await chai.request(baseUrl.local.SERVER_URL)
           .post("/api/auth/login")
@@ -89,7 +89,7 @@ describe("sign api prep", () => {
       token = res.body.token;
       const jwtDetails = jwt.verify(res.body.token, process.env.JWT_SECRET);
       expect(userDetails.email).eql(jwtDetails.payload);
-      const registeredUserData = await readCollection("users", { email: userDetails.email });
+      const registeredUserData = await read.single("users", { email: userDetails.email });
       const isPasswordMatched = await bcrypt.compare(userDetails?.password.toString(),
         registeredUserData?.password);
       expect(isPasswordMatched).to.be.true;
@@ -131,7 +131,7 @@ describe("login test cases", () => {
 
     it(`it should see whether the username already exists and
          respond with 200 if it is present`, async () => {
-      const findEmail = await readCollection("users", { email: userDetails.email });
+      const findEmail = await read.single("users", { email: userDetails.email });
       expect(findEmail?.email).eql(userDetails?.email);
       const res = await chai.request(baseUrl.local.SERVER_URL)
         .post("/api/auth/login")
@@ -231,7 +231,7 @@ describe("when delete operation is executed", () => {
       await apiNegative(negativePayload);
     });
     afterEach(async () => {
-      const userExists = await readCollection("users", { email: "BrandonFlynn12@gmail.com" });
+      const userExists = await read.single("users", { email: "BrandonFlynn12@gmail.com" });
       if (userExists) {
         const res = await chai.request(baseUrl.local.SERVER_URL)
           .delete("/api/auth/deleteUser")

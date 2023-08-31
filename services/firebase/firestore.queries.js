@@ -1,51 +1,25 @@
 const { db } = require("./configuration");
-// testing
-// (async () => {
-//   const res = await db.collection("cities").add({
-//     name: "Tokyo",
-//     country: "Japan"
-//   });
-//   console.log("Added document with ID: testing ", res.id);
-// })();
 
-// get all documentss
-exports.getAllDocuments = async (collectionName) => {
+exports.addDocument = async (collectionName, payload) => {
+  const addedDoc = await db.collection(collectionName).add(payload);
+  return addedDoc.id
+}
+const getAllDocuments = async (collectionName) => {
   const snapshot = await db.collection(collectionName).get();
-  return snapshot.docs.map((doc) => {
+  const documentsWithId = snapshot.docs.map((doc) => {
     return { id: doc.id, ...doc.data() };
   });
+  return documentsWithId;
 };
 // get Single Document
-exports.readDocument = async (collectionName, payload) => {
-  console.log(db.FieldPath, "fieldpath");
-  // const snapshot = await db.collection(collectionName).where("country", "==", "Japan");
-  // snapshot.get().then(snapshot => {
-  //   snapshot.forEach(user => {
-  //     console.log(user.id, ' => ', user.data());
-  //   });
-  // })
-  const citiesRef = db.collection('cities');
-  const snapshot = await citiesRef.where('capital', '==', "Japan").get();
-  console.log(snapshot, "snapshot empty");
-  if (snapshot.empty) {
-    console.log('No matching documents.');
-    return;
-  }
-
-  snapshot.forEach(doc => {
-    console.log(doc.id, '=>', doc.data());
-  });
-  // return snapshot.docs.map((doc) => {
-  //   console.log(doc, "doc-2");
-  //   return { id: doc.id, ...doc.data() };
-  // });
+const readSingleDocument = async (collectionName, payload) => {
+  const getCollectionData = await db.collection(collectionName).doc(payload.id).get();
+  return getCollectionData.data();
 };
-// create document in a collection
-exports.addDocument = async (collectionName, payload) => {
-  const doc = await db.collection(collectionName).add(payload);
-  return doc.id;
-};
-
+exports.read = {
+  single: readSingleDocument,
+  all: getAllDocuments
+}
 // update document in a collection
 exports.updateDocument = async (collectionName, payload) => {
   await db.collection(collectionName).doc(payload.filter.id).update(payload.update);

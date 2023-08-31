@@ -2,7 +2,7 @@ const chai = require("chai");
 const { connectDB } = require("../../utils/databaseConnection");
 const { userSignup, userLogin, deleteUserAccount } = require("../../features/user");
 const { verifyToken } = require("../../services/token");
-const { readCollection } = require("../../services/mongodb/actionFunctions");
+const { read } = require("../../services/firebase/firestore.queries");
 
 const expect = chai.expect;
 
@@ -12,7 +12,7 @@ const testUser = {
   password: "streaks123"
 };
 const readAndDeleteData = async () => {
-  const savedUserDetails = await readCollection("users", { email: testUser.email });
+  const savedUserDetails = await read.single("users", { email: testUser.email });
   if (savedUserDetails) {
     const token = await userLogin({ email: testUser.email, password: testUser.password });
     const req = {
@@ -38,7 +38,7 @@ describe("sign up feature", () => {
     expect(validEmail).to.equal(testUser.email);
   });
   it("to check if userdetails are saved in database", async () => {
-    const savedUserDetails = await readCollection("users", { email: testUser.email });
+    const savedUserDetails = await read.single("users", { email: testUser.email });
     expect({ email: savedUserDetails.email, userName: savedUserDetails.userName })
       .to.deep.equal({ email: testUser.email, userName: testUser.userName });
   });
@@ -154,7 +154,7 @@ describe("delete api", () => {
       }
     };
     await deleteUserAccount(req);
-    const userDetails = await readCollection("users", { email: testUser.email });
+    const userDetails = await read.single("users", { email: testUser.email });
     expect(userDetails).to.be.null
   });
 });

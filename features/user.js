@@ -1,11 +1,11 @@
 const { generateToken } = require("../services/token");
 const { requestError } = require("../services/errors");
 const bcrypt = require("bcrypt");
-const { addCollection, readCollection, deleteCollection } = require("../services/mongodb/actionFunctions");
+const { addDocument, read, deleteDocument } = require("../services/firebase/firestore.queries")
 
 exports.comparePassword = async function (password, email) {
   try {
-    const userDetails = await readCollection("users", { email });
+    const userDetails = await read.single("users", { email });
     return bcrypt.compare(password.toString(), userDetails?.password);
   } catch (err) {
     console.error("comapre password error", err);
@@ -15,10 +15,10 @@ exports.comparePassword = async function (password, email) {
 const comparePassword = exports.comparePassword;
 exports.userSignup = async (userDetail) => {
   const { email, userName, password } = userDetail;
-  if (await readCollection("users", { email })) {
+  if (await read.single("users", { email })) {
     throw requestError("User email already exists");
   }
-  await addCollection("users", {
+  await addDocument("users", {
     email,
     userName,
     password
@@ -29,7 +29,7 @@ exports.userSignup = async (userDetail) => {
 
 exports.userLogin = async function (userDetails) {
   const { email, password } = userDetails;
-  const existingUser = await readCollection("users", { email });
+  const existingUser = await read.single("users", { email });
   if (!existingUser) {
     throw requestError("Invalid User email");
   }
@@ -42,12 +42,12 @@ exports.userLogin = async function (userDetails) {
 
 exports.deleteUserAccount = async function (req) {
   const { email, password } = req.body;
-  const userDetails = await readCollection("users", { email });
+  const userDetails = await read.single("users", { email });
   if (!userDetails) {
     throw requestError("Invalid User email");
   }
   if (!await comparePassword(password, email)) {
     throw requestError("Password doesn't match");
   }
-  await deleteCollection("users", { email });
+  await deleteDocument("users", { email });
 };
