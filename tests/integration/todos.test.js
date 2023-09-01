@@ -312,11 +312,11 @@ describe("updateTodoById", () => {
     it("should have correct data when taskname is updated while image is not updated", async () => {
       const updateTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
         .patch("/api/todos/updateTodo")
-        .field({ taskName: "clean desk", id: newlyCreatedTodo.body.todo._id })
+        .field({ taskName: "clean desk", id: newlyCreatedTodo.body.todo.id })
         .type("form")
         .set({ Authorization: `Bearer ${token}` });
       expect(updateTodoResponse.status).to.eql(200);
-      const getUpdatedTodo = await getTodoById(newlyCreatedTodo.body.todo._id, token);
+      const getUpdatedTodo = await getTodoById(newlyCreatedTodo.body.todo.id, token);
       expect(getUpdatedTodo.body.todo.taskName).to.eql("clean desk");
     });
     it("should have correct data when image is updated while title is not updated", async () => {
@@ -324,17 +324,17 @@ describe("updateTodoById", () => {
       const updateTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
         .patch("/api/todos/updateTodo")
         .type("form")
-        .field({ id: newlyCreatedTodo.body.todo._id })
+        .field({ id: newlyCreatedTodo.body.todo.id })
         .attach("image", fs.readFileSync(filePath), filePath)
         .set({ Authorization: `Bearer ${token}` });
       expect(updateTodoResponse.status).to.eql(200);
-      const getUpdatedTodo = await getTodoById(newlyCreatedTodo.body.todo._id, token);
+      const getUpdatedTodo = await getTodoById(newlyCreatedTodo.body.todo.id, token);
       const fileDownloadPath = path.join("tests", "uploads", getUpdatedTodo.body.todo.referencePath.split("/")[2]);
       await checkForUploadedImg(fileDownloadPath, filePath, getUpdatedTodo.body.todo.referencePath);
     });
     it("form validation on entering invalid fields", async () => {
       const payloadData = [
-        { key: "id", wrongValues: ["", 123456], correctValue: newlyCreatedTodo.body.todo._id },
+        { key: "id", wrongValues: ["", 123456], correctValue: newlyCreatedTodo.body.todo.id },
         { key: "taskName", wrongValues: [], correctValue: "clean desk" }
       ];
       const negativePayload = {
@@ -349,7 +349,7 @@ describe("updateTodoById", () => {
       const tokenValidationPayload = {
         method: "patch",
         url: "/api/todos/updateTodo",
-        payload: { taskName: testTodoDatas[0].taskName, id: newlyCreatedTodo.body.todo._id }
+        payload: { taskName: testTodoDatas[0].taskName, id: newlyCreatedTodo.body.todo.id }
       };
       await checkIfTokenPassed(tokenValidationPayload);
     });
@@ -373,7 +373,7 @@ describe("deleteTodoById", () => {
       const deleteTodoResponse = await chai.request(baseUrl.local.SERVER_URL)
         .delete("/api/todos/deleteTodo")
         .set({ Authorization: `Bearer ${token}` })
-        .send({ id: newlyCreatedTodo.body.todo._id });
+        .send({ id: newlyCreatedTodo.body.todo.id });
       expect(deleteTodoResponse.status).to.equal(200);
     });
     it("should throw 400 if invalid id is provided", async () => {
@@ -393,7 +393,7 @@ describe("deleteTodoById", () => {
         url: "/api/todos/deleteTodo",
         method: "delete",
         headers: { Authorization: `Bearer ${token}` },
-        payloadDetails: [{ key: "id", wrongValues: ["", 12345], correctValue: newlyCreatedTodo.body.todo._id }]
+        payloadDetails: [{ key: "id", wrongValues: ["", 12345], correctValue: newlyCreatedTodo.body.todo.id }]
       };
       await apiNegative(negativePayload);
     });
@@ -401,7 +401,7 @@ describe("deleteTodoById", () => {
       const tokenValidationPayload = {
         method: "delete",
         url: "/api/todos/deleteTodo",
-        payload: { id: newlyCreatedTodo.body.todo._id }
+        payload: { id: newlyCreatedTodo.body.todo.id }
       };
       await checkIfTokenPassed(tokenValidationPayload);
     });

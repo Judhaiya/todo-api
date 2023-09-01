@@ -185,12 +185,12 @@ describe("createTodo", () => {
         };
         todoWithImageId = await createTodo(payload);
         todoDetails = await read.single("todos", { taskName: testData.taskName });
-        expect(todoDetails._id.toString()).to.eql(todoWithImageId);
+        expect(todoDetails.id.toString()).to.eql(todoWithImageId);
       } else {
         payload = { body: { taskName: testData.taskName } };
         todoWithoutImageId = await createTodo(payload);
         todoDetails = await read.single("todos", { taskName: testData.taskName });
-        expect(todoDetails._id.toString()).to.eql(todoWithoutImageId);
+        expect(todoDetails.id.toString()).to.eql(todoWithoutImageId);
       };
     }
   });
