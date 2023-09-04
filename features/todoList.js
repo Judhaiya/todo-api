@@ -122,7 +122,7 @@ exports.updateTodo = async (req) => {
 };
 
 exports.deleteTodo = async (req) => {
- const getMatchingCollection = await read.singleById("todos", {
+  const getMatchingCollection = await read.singleById("todos", {
     id: req.body.id
   });
   if (!getMatchingCollection) {

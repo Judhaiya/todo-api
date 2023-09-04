@@ -1,7 +1,6 @@
 const express = require("express");
 const authRoutes = require("./routes/authentication");
 const todoListRoutes = require("./routes/todoList");
-const { connectDB } = require("./utils/databaseConnection");
 const app = express();
 const dotenv = require("dotenv");
 
