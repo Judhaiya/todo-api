@@ -22,6 +22,7 @@ exports.errorHandler = (err, res) => {
       res.status(400).json({ msg });
       break;
     default:
+      console.error(err, "something went wrong err msg");
       res.status(500).json({ msg: "something went wrong" });
   }
 };

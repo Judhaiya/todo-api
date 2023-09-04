@@ -58,8 +58,7 @@ router.patch("/updateTodo", validateToken, upload.single("image"), validateUserS
     res.status(200).json({ msg: "Details have been updated successfully" });
   } catch (err) {
     errorHandler(err, res);
-    console.error(err, "error in updating in todo");
-  }
+   }
 });
 
 router.delete("/deleteTodo", validateToken, validateUserSchema, async (req, res) => {

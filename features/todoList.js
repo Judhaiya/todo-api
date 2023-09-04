@@ -2,7 +2,7 @@ const {
   addDocument,
   read,
   updateDocument,
-  deleteDocument,
+  deleteDocument
 } = require("../services/firebase/firestore.queries");
 const { requestError } = require("../services/errors");
 const {
@@ -33,7 +33,7 @@ exports.fetchingTodos = async () => {
   return todoItems;
 };
 exports.fetchingSingleTodo = async (req) => {
-  const singleTodo = await read.single("todos", { id: req.query.id });
+  const singleTodo = await read.singleById("todos", { id: req.query.id });
   if (!singleTodo) {
     throw requestError("Cannot find todo with the provided id,Invalid id");
   }
@@ -68,58 +68,65 @@ exports.createTodo = async (req) => {
       }`
     };
   }
-  const newlyCreatedTodo = await addDocument("todos", payload);
-  return newlyCreatedTodo.id;
+  const newlyCreatedTodoId = await addDocument("todos", payload);
+  return newlyCreatedTodoId;
 };
 exports.updateTodo = async (req) => {
   let payload;
-  const getMatchingCollection = await read.single("todos", { id: req.body.id });
+  const getMatchingCollection = await read.singleById("todos", {
+    id: req.body.id
+  });
   if (!getMatchingCollection) {
     throw requestError("todo doesn't exists");
   }
   if (!req.file) {
     payload = {
       filter: { id: req.body.id },
-      update: { taskName: req.body.taskName },
+      update: { taskName: req.body.taskName }
     };
-    await updateDocument("todos", payload);
-    return;
-  }
-  if (getMatchingCollection.referencePath !== undefined) {
-    await deleteFileInStorage(getMatchingCollection?.referencePath);
-  }
-  const fileDestination = path.join(
-    normalizePath(req.file.path).split("\\")[0],
-    normalizePath(req.file.path).split("\\")[1],
-    normalizePath(req.file.path).split("\\")[2]
-  );
-  await uploadFile(
-    fileDestination,
-    `todos/images/${normalizePath(req.file.path).split("\\")[2]}`
-  );
-  payload = {
-    filter: { id: req.body.id },
-    update: {
-      taskName: req.body.taskName,
-      referencePath: `todos/images/${
-        normalizePath(req.file.path).split("\\")[2]
-      }`
+    await updateDocument.updateDocumentById("todos", payload);
+  } else {
+    if (getMatchingCollection.referencePath !== undefined) {
+      await deleteFileInStorage(getMatchingCollection?.referencePath);
     }
-  };
-  await updateDocument("todos", payload);
+    const fileDestination = path.join(
+      normalizePath(req.file.path).split("\\")[0],
+      normalizePath(req.file.path).split("\\")[1],
+      normalizePath(req.file.path).split("\\")[2]
+    );
+    await uploadFile(
+      fileDestination,
+      `todos/images/${normalizePath(req.file.path).split("\\")[2]}`
+    );
+    payload = {
+      filter: { id: req.body.id },
+      update: {
+        referencePath: `todos/images/${
+          normalizePath(req.file.path).split("\\")[2]
+        }`
+      }
+    };
+    if (req.body.taskName !== undefined) {
+      payload = {
+        filter: { id: req.body.id },
+        update: {
+          taskName: req.body.taskName,
+          referencePath: `todos/images/${
+            normalizePath(req.file.path).split("\\")[2]
+          }`
+        }
+      };
+    }
+    await updateDocument.updateDocumentById("todos", payload);
+  }
 };
 
 exports.deleteTodo = async (req) => {
-  const getMatchingCollection = await read.single("todos", { id: req.body.id });
+ const getMatchingCollection = await read.singleById("todos", {
+    id: req.body.id
+  });
   if (!getMatchingCollection) {
     throw requestError("todo id doesn't exists.Please enter valid id");
-  };
-  await deleteDocument("todos", { id: req.body.id });
+  }
+  await deleteDocument.deleteDocumentById("todos", { id: req.body.id });
 };
-
-// exports.deleteAllTodos = async () => {
-//   if (await read.all("todos").length === 0) {
-//     throw requestError("no todos in database");
-//   };
-//   await deleteAllDocument("todos");
-// };

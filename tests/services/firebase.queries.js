@@ -37,13 +37,13 @@ it("delete data function should delete user record in the database", async () =>
     await addDocument("users", testUser);
     await deleteDocument.deleteDocumentByKey("users", { email: testUser.email });
     const userDetailsInDb = await read.singleByKey("users", { email: testUser.email });
-     expect(userDetailsInDb).to.be.null;
+   expect(userDetailsInDb).to.be.undefined;
   });
-  after(async () => {
-    await deleteDocument.deleteDocumentByKey("users", { email: testUser.email });
-  })
+  // after(async () => {
+  //   await deleteDocument.deleteDocumentByKey("users", { email: testUser.email });
+  // })
 });
-describe("readDataInTheCollection", () => {
+describe("getSingleTodo", () => {
   before(async () => {
   await addDocument("users", testUser);
   });
@@ -59,7 +59,7 @@ describe("updateTodo", async () => {
   describe("update todo works", () => {
     let id;
     before(async () => {
-     id =  await addDocument("todos", { taskName: sampleTodoData[0].taskName });
+     id = await addDocument("todos", { taskName: sampleTodoData[0].taskName });
     });
     it("works if it update data in the document", async () => {
       const payload = {
@@ -71,7 +71,8 @@ describe("updateTodo", async () => {
         }
       };
      await updateDocument.updateDocumentById("todos", payload);
-      expect(await read.singleById("todos", { id })).to.eql("to mop the floor");
+     const updatedTodo = await read.singleById("todos", { id });
+    expect(updatedTodo.taskName).to.eql("to mop the floor");
     });
     after(async () => {
       await deleteDocument.deleteDocumentById("todos", { id });
