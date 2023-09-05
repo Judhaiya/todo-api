@@ -10,7 +10,6 @@ const {
   read,
   deleteDocument
 } = require("../../services/firebase/firestore.queries");
-const { connectDB } = require("../../utils/databaseConnection");
 const { checkForUploadedImg } = require("../features/uploadImageCheck");
 const path = require("path");
 const fs = require("fs");

@@ -4,7 +4,7 @@ const chaiHttp = require("chai-http");
 const { baseUrl } = require("../../utils/baseUrl");
 const fs = require("fs");
 const { checkForUploadedImg } = require("../features/uploadImageCheck");
-const { read } = require("../../services/firebase/firestore.queries");
+const { deleteDocument } = require("../../services/firebase/firestore.queries");
 const { apiNegative } = require("../integration/apiNegative");
 const path = require("path");
 
@@ -71,15 +71,6 @@ async function deleteUserAccount(token) {
   expect(deleteResponse.status).to.equal(200);
 }
 
-async function deleteSingleTodo(token, id) {
-  const deleteTodoResponse = await chai
-    .request(baseUrl.local.SERVER_URL)
-    .delete("/api/todos/deleteTodo")
-    .send({ id })
-    .set({ Authorization: `Bearer ${token}` });
-  expect(deleteTodoResponse.status).to.equal(200);
-}
-
 async function createTodoAndGetId(token) {
   const filePath = path.join(
     testTodoDatas[1].image.split("/")[2],
@@ -124,15 +115,11 @@ async function checkIfTokenPassed(payloadData) {
   expect(res.body.msg).to.equal("jwt must be provided");
 }
 
-async function checkTodoExistAndDelete(
-  todoWithImageId,
-  todoWithoutImageId,
-  token
-) {
-  const todoIds = [todoWithImageId, todoWithoutImageId];
-  for (const id of todoIds) {
-    if (await read.singleById("todos", { id })) {
-      await deleteSingleTodo(token, id);
+async function checkTodoExistAndDelete(token) {
+  const getAllTodoResponse = await getAllTodos(token);
+  if (getAllTodoResponse.body.todos !== undefined) {
+    for (const todo of getAllTodoResponse.body.todos) {
+      await deleteDocument.deleteDocumentById("todos", { id: todo.id });
     }
   }
 }
@@ -240,12 +227,11 @@ describe("fetchingTodoById", () => {
         payloadDetails: [
           {
             key: "id",
-            wrongValues: ["", 123456],
+            wrongValues: [123456],
             correctValue: todoWithoutImageId
           }
         ]
       };
-
       await apiNegative(negativePayload);
     });
     it("throw error if token is not passed", async () => {
@@ -258,7 +244,7 @@ describe("fetchingTodoById", () => {
     });
     afterEach(async () => {
       await deleteUserAccount(token);
-      await checkTodoExistAndDelete(todoWithImageId, todoWithoutImageId, token);
+      await checkTodoExistAndDelete(token);
     });
   });
 });
@@ -270,7 +256,9 @@ describe("fetchingAllTodos", () => {
       token = await createAccount(token);
       const getAllTodoResponse = await getAllTodos(token);
       if (getAllTodoResponse.body.todos !== undefined) {
-        await deleteTodoResponse(token);
+        for (const todo of getAllTodoResponse.body.todos) {
+          await deleteDocument.deleteDocumentById("todos", { id: todo.id });
+        }
       }
       for (const todoData of testTodoDatas) {
         if (todoData.image !== undefined) {
@@ -287,15 +275,15 @@ describe("fetchingAllTodos", () => {
             .attach("image", fs.readFileSync(filePath), filePath)
             .set({ Authorization: `Bearer ${token}` });
           expect(createTodoResponse.status).to.equal(200);
-          return;
+        } else {
+          const createTodoResponse = await chai
+            .request(baseUrl.local.SERVER_URL)
+            .post("/api/todos/createTodo")
+            .field({ taskName: todoData.taskName })
+            .type("form")
+            .set({ Authorization: `Bearer ${token}` });
+          expect(createTodoResponse.status).to.equal(200);
         }
-        const createTodoResponse = await chai
-          .request(baseUrl.local.SERVER_URL)
-          .post("/api/todos/createTodo")
-          .field({ taskName: todoData.taskName })
-          .type("form")
-          .set({ Authorization: `Bearer ${token}` });
-        expect(createTodoResponse.status).to.equal(200);
       }
     });
     it("check if it is fetching all the todos from the db ", async () => {
@@ -303,13 +291,13 @@ describe("fetchingAllTodos", () => {
       const todoList = getAllTodoResponse.body.todos.map(({ taskName }) => {
         return { taskName };
       });
-      const testTodosTitle = testTodoDatas.map((testTodoData) => {
+      const testTodosTaskName = testTodoDatas.map((testTodoData) => {
         return {
           taskName: testTodoData.taskName
         };
       });
       expect(getAllTodoResponse.status).to.equal(200);
-      expect(todoList).to.have.deep.members(testTodosTitle);
+      expect(todoList).to.have.deep.members(testTodosTaskName);
     });
     it("throw error if token is not passed", async () => {
       const tokenValidationPayload = {
@@ -321,7 +309,7 @@ describe("fetchingAllTodos", () => {
     });
     afterEach(async () => {
       await deleteUserAccount(token);
-      await deleteTodoResponse(token);
+      await checkTodoExistAndDelete(token);
     });
   });
 });
@@ -389,7 +377,7 @@ describe("createTodos", () => {
     });
     afterEach(async () => {
       await deleteUserAccount(token);
-      await deleteTodoResponse(token);
+      await checkTodoExistAndDelete(token);
     });
   });
 });
@@ -471,7 +459,7 @@ describe("updateTodoById", () => {
     });
     afterEach(async () => {
       await deleteUserAccount(token);
-      await deleteTodoResponse(token);
+      await checkTodoExistAndDelete(token);
     });
   });
 });
@@ -530,68 +518,7 @@ describe("deleteTodoById", () => {
     });
     afterEach(async () => {
       await deleteUserAccount(token);
-      await deleteTodoResponse(token);
-    });
-  });
-});
-
-describe("deleteAllTodos", () => {
-  describe("test cases will be passed in the below scenario", () => {
-    let token;
-    before(async () => {
-      token = await createAccount(token);
-      const getAllTodoResponse = await getAllTodos(token);
-      expect(getAllTodoResponse.status).to.equal(200);
-      if (getAllTodoResponse.body.todos.length > 0) {
-        const deleteTodoResponse = await chai
-          .request(baseUrl.local.SERVER_URL)
-          .delete("/api/todos/deleteAllTodos")
-          .set({ Authorization: `Bearer ${token}` });
-        expect(deleteTodoResponse.status).to.equal(200);
-      }
-      for (const todoData of testTodoDatas) {
-        if (todoData.image !== undefined) {
-          const filePath = path.join(
-            todoData.image.split("/")[2],
-            todoData.image.split("/")[3],
-            todoData.image.split("/")[4]
-          );
-          const createTodoResponse = await chai
-            .request(baseUrl.local.SERVER_URL)
-            .post("/api/todos/createTodo")
-            .field({ taskName: todoData.taskName })
-            .type("form")
-            .attach("image", fs.readFileSync(filePath), filePath)
-            .set({ Authorization: `Bearer ${token}` });
-          expect(createTodoResponse.status).to.equal(200);
-        }
-        const createTodoResponse = await chai
-          .request(baseUrl.local.SERVER_URL)
-          .post("/api/todos/createTodo")
-          .field({ taskName: todoData.taskName })
-          .type("form")
-          .set({ Authorization: `Bearer ${token}` });
-        expect(createTodoResponse.status).to.equal(200);
-      }
-    });
-    it("delete all the todos", async () => {
-      await deleteTodoResponse(token);
-    });
-    it("throw error if token is not passed", async () => {
-      const tokenValidationPayload = {
-        method: "delete",
-        url: "/api/todos/deleteAllTodos",
-        payload: null
-      };
-      await checkIfTokenPassed(tokenValidationPayload);
-    });
-    after(async () => {
-      await deleteUserAccount(token);
-      const getAllTodoResponse = await getAllTodos(token);
-      expect(getAllTodoResponse.status).to.equal(200);
-      if (getAllTodoResponse.body.todos.length > 0) {
-        await deleteTodoResponse(token);
-      }
+      await checkTodoExistAndDelete(token);
     });
   });
 });

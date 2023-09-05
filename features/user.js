@@ -27,7 +27,7 @@ exports.userSignup = async (userDetail) => {
   await addDocument("users", {
     email,
     userName,
-    hashedPassword
+    password: hashedPassword
   });
   const accessToken = generateToken(email);
   return accessToken;

@@ -3,10 +3,6 @@ const { validationError, errorHandler } = require("../services/errors");
 
 const validateSchema = new Validator();
 
-Validator.prototype.customFormats.idFormat = function (input) {
-  const mongoDbIdRegex = new RegExp("^[0-9a-fA-F]{24}$")
-  return mongoDbIdRegex.test(input);
-};
 const getUserSchema = (path) => {
   try {
     let requiredSchema;
@@ -51,7 +47,7 @@ const getUserSchema = (path) => {
       case "/getSingleTodo":
         requiredSchema = {
           properties: {
-            id: { type: "string", format: "idFormat" }
+            id: { type: "string", minLength: 1 }
           },
           required: ["id"]
         };
@@ -59,7 +55,7 @@ const getUserSchema = (path) => {
       case "/updateTodo":
         requiredSchema = {
           properties: {
-            id: { type: "string", format: "idFormat" },
+            id: { type: "string", minLength: 1 },
             taskName: { type: "string" },
             image: { type: "string" }
           },
@@ -69,14 +65,14 @@ const getUserSchema = (path) => {
       case "/deleteTodo":
         requiredSchema = {
           properties: {
-            id: { type: "string", format: "idFormat" }
+            id: { type: "string", minLength: 1 }
           },
           required: ["id"]
         };
         break;
       default:
         throw new Error(`${path} is invalid path`);
-    };
+    }
     return requiredSchema;
   } catch (err) {
     console.error(err, "invalid path");
@@ -97,9 +93,18 @@ exports.validateUserSchema = async (req, res, next) => {
     if (req.method === "GET") {
       userValue = req.query;
     }
-    if (validateSchema.validate(userValue, getUserSchema(req.path)
-      , { preValidateProperty: preValidateProperty(req.path, req.file, req.body.taskName) }).errors.length > 0) {
-      const errorMsg = validateSchema.validate(userValue, getUserSchema(req.path)).errors.map(err => err.stack);
+    if (
+      validateSchema.validate(userValue, getUserSchema(req.path), {
+        preValidateProperty: preValidateProperty(
+          req.path,
+          req.file,
+          req.body.taskName
+        )
+      }).errors.length > 0
+    ) {
+      const errorMsg = validateSchema
+        .validate(userValue, getUserSchema(req.path))
+        .errors.map((err) => err.stack);
       throw validationError(errorMsg?.toString());
     }
     next();

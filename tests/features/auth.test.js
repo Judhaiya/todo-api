@@ -1,6 +1,9 @@
 const chai = require("chai");
-const { connectDB } = require("../../utils/databaseConnection");
-const { userSignup, userLogin, deleteUserAccount } = require("../../features/user");
+const {
+  userSignup,
+  userLogin,
+  deleteUserAccount
+} = require("../../features/user");
 const { verifyToken } = require("../../services/token");
 const { read } = require("../../services/firebase/firestore.queries");
 
@@ -12,9 +15,14 @@ const testUser = {
   password: "streaks123"
 };
 const readAndDeleteData = async () => {
-  const savedUserDetails = await read.single("users", { email: testUser.email });
+  const savedUserDetails = await read.singleByKey("users", {
+    email: testUser.email
+  });
   if (savedUserDetails) {
-    const token = await userLogin({ email: testUser.email, password: testUser.password });
+    const token = await userLogin({
+      email: testUser.email,
+      password: testUser.password
+    });
     const req = {
       body: {
         email: testUser.email,
@@ -26,11 +34,8 @@ const readAndDeleteData = async () => {
     };
     await deleteUserAccount(req);
   }
-}
+};
 describe("sign up feature", () => {
-  beforeEach(async () => {
-    await connectDB();
-  });
   it("return token if valid credentials are provided", async () => {
     await readAndDeleteData();
     const token = await userSignup(testUser);
@@ -38,9 +43,13 @@ describe("sign up feature", () => {
     expect(validEmail).to.equal(testUser.email);
   });
   it("to check if userdetails are saved in database", async () => {
-    const savedUserDetails = await read.single("users", { email: testUser.email });
-    expect({ email: savedUserDetails.email, userName: savedUserDetails.userName })
-      .to.deep.equal({ email: testUser.email, userName: testUser.userName });
+    const savedUserDetails = await read.singleByKey("users", {
+      email: testUser.email
+    });
+    expect({
+      email: savedUserDetails.email,
+      userName: savedUserDetails.userName
+    }).to.deep.equal({ email: testUser.email, userName: testUser.userName });
   });
   it("will throw error if created with existing email", async () => {
     try {
@@ -54,20 +63,23 @@ describe("sign up feature", () => {
 });
 
 describe("login feature", () => {
-  beforeEach(async () => {
-    await connectDB();
-  });
   it("fails if we try to login with unregistered email", async () => {
     try {
-      await userLogin({ email: "iris12@gmail.com", password: testUser.password });
+      await userLogin({
+        email: "iris12@gmail.com",
+        password: testUser.password
+      });
     } catch (err) {
       expect(err.code).to.equal(400);
       expect(err.msg).to.equal("Invalid User email");
       expect(err.name).to.equal("request error");
-    };
+    }
   });
   it("will succeed if we login with registered email", async () => {
-    const token = await userLogin({ email: testUser.email, password: testUser.password });
+    const token = await userLogin({
+      email: testUser.email,
+      password: testUser.password
+    });
     const validEmail = verifyToken(token).payload;
     expect(validEmail).to.equal(testUser.email);
   });
@@ -78,14 +90,13 @@ describe("login feature", () => {
       expect(err.code).to.equal(400);
       expect(err.msg).to.equal("Password doesn't match");
       expect(err.name).to.equal("request error");
-    };
+    }
   });
 });
 
 describe("delete api", () => {
   let token;
   beforeEach(async () => {
-    await connectDB();
     await readAndDeleteData();
     token = await userSignup(testUser);
   });
@@ -154,7 +165,7 @@ describe("delete api", () => {
       }
     };
     await deleteUserAccount(req);
-    const userDetails = await read.single("users", { email: testUser.email });
-    expect(userDetails).to.be.null
+    const userDetails = await read.singleByKey("users", { email: testUser.email });
+    expect(userDetails).to.be.null;
   });
 });

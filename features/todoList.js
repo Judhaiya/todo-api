@@ -26,9 +26,9 @@ exports.fetchingTodos = async () => {
         imageUrl: imageUploadUrl
       });
       todoItems = [...todoItems, todoWithImage];
-      return todoItems;
+    } else {
+      todoItems = [...todoItems, todo];
     }
-    todoItems = [...todoItems, todo];
   }
   return todoItems;
 };
