@@ -26,7 +26,7 @@ module.exports.apiNegative = async function apiNegative(negativePayload) {
         const res = await chai
           .request(baseUrl.local.SERVER_URL)
           [`${method}`](url)
-          .set(headers !== null && headers)
+          .set(headers !== null ? headers : {})
           .send({ ...apiPayload, [formData.key]: invalidField });
         expect(res.statusCode).to.equal(400);
       }
@@ -36,7 +36,7 @@ module.exports.apiNegative = async function apiNegative(negativePayload) {
       .request(baseUrl.local.SERVER_URL)
       [`${method}`](url)
       .send(correctFields)
-      .set(headers !== null && headers);
+      .set(headers !== null ? headers : {});
     expect(res.statusCode).to.equal(400);
   }
 };

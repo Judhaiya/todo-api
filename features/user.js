@@ -12,7 +12,6 @@ exports.comparePassword = async function (password, email) {
     const userDetails = await read.singleByKey("users", { email });
     return bcrypt.compare(password.toString(), userDetails?.password);
   } catch (err) {
-    console.error("comapre password error", err);
     throw requestError("no valid password found");
   }
 };

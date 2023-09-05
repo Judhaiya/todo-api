@@ -131,7 +131,7 @@ describe("signUpApiPrep", () => {
   });
 });
 
-describe("login test cases", () => {
+describe("loginApiPrep", () => {
   describe("when login is called", () => {
     let token;
     before(async () => {
@@ -189,8 +189,8 @@ describe("login test cases", () => {
 // no password,it should respond with status 400
 // no username it should respond with status 400
 
-describe("when delete operation is executed", () => {
-  describe("it should", () => {
+describe("deleteApiPrep", () => {
+  describe("when delete api is called", () => {
     let token;
     beforeEach(async () => {
       const res = await chai
@@ -243,7 +243,7 @@ describe("when delete operation is executed", () => {
         },
         {
           key: "password",
-          wrongValues: [1234, 1234578901112],
+          wrongValues: ["1234", "1234578901112"],
           correctValue: "gemininerd"
         }
       ];

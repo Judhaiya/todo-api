@@ -35,10 +35,13 @@ const readAndDeleteData = async () => {
     await deleteUserAccount(req);
   }
 };
-describe("sign up feature", () => {
-  it("return token if valid credentials are provided", async () => {
+describe("signUpFeature", () => {
+  let token;
+  beforeEach(async () => {
     await readAndDeleteData();
-    const token = await userSignup(testUser);
+    token = await userSignup(testUser);
+  });
+  it("return token if valid credentials are provided", async () => {
     const validEmail = verifyToken(token).payload;
     expect(validEmail).to.equal(testUser.email);
   });
@@ -60,9 +63,18 @@ describe("sign up feature", () => {
       expect(err.name).to.equal("request error");
     }
   });
+  afterEach(async () => {
+    await readAndDeleteData();
+  });
 });
 
-describe("login feature", () => {
+describe("loginFeature", () => {
+  beforeEach(async () => {
+    await readAndDeleteData();
+    const signUpResponse = await userSignup(testUser);
+    console.log(await userSignup(testUser), "signupresponse");
+    expect(signUpResponse.status).to.eql(200);
+  });
   it("fails if we try to login with unregistered email", async () => {
     try {
       await userLogin({
@@ -92,9 +104,12 @@ describe("login feature", () => {
       expect(err.name).to.equal("request error");
     }
   });
+  afterEach(async () => {
+    await readAndDeleteData();
+  });
 });
 
-describe("delete api", () => {
+describe("deleteUserFeature", () => {
   let token;
   beforeEach(async () => {
     await readAndDeleteData();
@@ -165,7 +180,12 @@ describe("delete api", () => {
       }
     };
     await deleteUserAccount(req);
-    const userDetails = await read.singleByKey("users", { email: testUser.email });
-    expect(userDetails).to.be.null;
+    const userDetails = await read.singleByKey("users", {
+      email: testUser.email
+    });
+    expect(userDetails).to.be.undefined;
+  });
+  afterEach(async () => {
+    await readAndDeleteData();
   });
 });
