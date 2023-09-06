@@ -16,8 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - env:
-         JWT_SECRET: ${{ secrets.MY_CLIENT_ID }}
-         FIREBASE_BUCKET_LOCATION: ${{ secrets.FIREBASE_BUCKET_LOCATION }}
+         ENV: ${{ secrets.ENV }}
+         SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+        run: |
+           echo  ${{ secrets.ENV }} | base64 --decode > .env
+           echo  ${{ SERVICE_ACCOUNT_KEY }} | base64 --decode >  services/firebase/serviceAccountKey.json
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
