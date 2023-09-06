@@ -1,4 +1,7 @@
 name: Node.js CI
+env:
+  env: ${{ secrets.ENV }}
+  serviceAccountKey: ${{ secrets.SERVICE_ACCOUNT_KEY }}
 on:
   push:
     branches: [ main ]
@@ -12,10 +15,18 @@ jobs:
         node-version: [18.x]
     steps:
       - uses: actions/checkout@v2
+      - shell: bash
+        env:
+         ENV: ${{ secrets.ENV }}
+         SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+        run: |
+           echo -n $ENV | base64 --decode > .env
+           echo -n $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
+           echo  "$ENV"
+        
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
          node-version: ${{ matrix.node-version }}
       - run: npm ci
-      - run: npm run build --if-present
       - run: npm test 
