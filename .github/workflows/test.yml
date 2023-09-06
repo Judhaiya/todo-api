@@ -21,7 +21,7 @@ jobs:
          SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
         run: |
            echo -n $ENV | base64 --decode > .env
-           echo -n $SERVICE_ACCOUNT_KEY | base64 --decode >  services/firebase/serviceAccountKey.json
+           echo -n $SERVICE_ACCOUNT_KEY | base64 --decode >  services/firebase/serviceAccountKey
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
