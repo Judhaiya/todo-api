@@ -22,7 +22,7 @@ jobs:
         run: |
            echo -n $ENV | base64 --decode > .env
            echo -n $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
-           echo  -n $ENV | base64 --decode
+           echo  "$ENV"
         
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
