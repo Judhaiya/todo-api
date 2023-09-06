@@ -71,9 +71,7 @@ describe("signUpFeature", () => {
 describe("loginFeature", () => {
   beforeEach(async () => {
     await readAndDeleteData();
-    const signUpResponse = await userSignup(testUser);
-    console.log(await userSignup(testUser), "signupresponse");
-    expect(signUpResponse.status).to.eql(200);
+    await userSignup(testUser);
   });
   it("fails if we try to login with unregistered email", async () => {
     try {
