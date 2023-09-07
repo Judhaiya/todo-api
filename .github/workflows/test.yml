@@ -24,9 +24,6 @@ jobs:
         env:
           SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
         run: echo  $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
-      - run: echo  $DOT_ENV
-      - run: echo 'bGludXhoaW50LmNvbQo=' | base64 --decode
-      - run: cat -n .env
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test 
