@@ -6,6 +6,7 @@ on:
     branches: [ main ]
 jobs:
   build:
+    environment: Development
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -18,7 +19,7 @@ jobs:
       - name: Decode ENV
         env:
           DOT_ENV: ${{ secrets.ENV }}
-          run: echo  $DOT_ENV | base64 --decode > .env
+        run: echo  $DOT_ENV | base64 --decode > .env
       - name: Decode Service Account Key
         env:
           SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
