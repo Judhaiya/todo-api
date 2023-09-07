@@ -16,8 +16,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - name : encode and decode secrets
-        shell: bash
+      - shell: bash
         env:
          ENV: ${{ secrets.ENV }}
          SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
