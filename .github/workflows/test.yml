@@ -16,6 +16,16 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+      - shell: bash
+        env:
+         ENV: ${{ secrets.ENV }}
+         SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+         run: |
+           echo  $ENV | base64 --decode > .env
+           echo  $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
+           echo  $ENV
+           echo 'bGludXhoaW50LmNvbQo=' | base64 --decode
+
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test 
