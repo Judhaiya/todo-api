@@ -25,6 +25,7 @@ jobs:
            echo  $serviceAccountKey | base64 --decode > services/firebase/serviceAccountKey.json
            echo  $env
            echo 'bGludXhoaW50LmNvbQo=' | base64 --decode
+           cat -n .env
 
       - run: npm ci
       - run: npm run build --if-present
