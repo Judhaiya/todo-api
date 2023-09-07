@@ -23,7 +23,7 @@ jobs:
         run: |
            echo  $env | base64 --decode > .env
            echo  $serviceAccountKey | base64 --decode > services/firebase/serviceAccountKey.json
-           echo  $ENV
+           echo  $env
            echo 'bGludXhoaW50LmNvbQo=' | base64 --decode
 
       - run: npm ci
