@@ -5,8 +5,8 @@ on:
   pull_request:
     branches: [ main ]
 env:
-  env: ${{ secrets.ENV }}
-  serviceAccountKey: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+  DOT_ENV: ${{ secrets.ENV }}
+  SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
 jobs:
    build:
     runs-on: ubuntu-latest
@@ -18,9 +18,9 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - run: echo  $env | base64 --decode > .env
-      - run: echo  $serviceAccountKey | base64 --decode > services/firebase/serviceAccountKey.json
-      - run: echo  $env
+      - run: echo  $DOT_ENV | base64 --decode > .env
+      - run: echo  $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
+      - run: echo  $DOT_ENV
       - run: echo 'bGludXhoaW50LmNvbQo=' | base64 --decode
       - run: cat -n .env
       - run: npm ci
