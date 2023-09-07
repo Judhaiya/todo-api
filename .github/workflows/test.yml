@@ -21,8 +21,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - shell: bash
         run: |
-           echo  $ENV | base64 --decode > .env
-           echo  $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
+           echo  $env | base64 --decode > .env
+           echo  $serviceAccountKey | base64 --decode > services/firebase/serviceAccountKey.json
            echo  $ENV
            echo 'bGludXhoaW50LmNvbQo=' | base64 --decode
 
