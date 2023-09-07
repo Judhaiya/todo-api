@@ -4,6 +4,9 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+env:
+  env: ${{ secrets.ENV }}
+  serviceAccountKey: ${{ secrets.SERVICE_ACCOUNT_KEY }}
 jobs:
    build:
     runs-on: ubuntu-latest
@@ -17,10 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - shell: bash
-        env:
-         ENV: ${{ secrets.ENV }}
-         SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
-         run: |
+        run: |
            echo  $ENV | base64 --decode > .env
            echo  $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
            echo  $ENV
