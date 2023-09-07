@@ -11,15 +11,18 @@ jobs:
       matrix:
         node-version: [18.x]
     steps:
-      - env:
-          DOT_ENV: ${{ secrets.ENV }}
-          SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - run: echo  $DOT_ENV | base64 --decode > .env
-      - run: echo  $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
+      - name: Decode ENV
+        env:
+          DOT_ENV: ${{ secrets.ENV }}
+          run: echo  $DOT_ENV | base64 --decode > .env
+      - name: Decode Service Account Key
+        env:
+          SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+        run: echo  $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
       - run: echo  $DOT_ENV
       - run: echo 'bGludXhoaW50LmNvbQo=' | base64 --decode
       - run: cat -n .env
