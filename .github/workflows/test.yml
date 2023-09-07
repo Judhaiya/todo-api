@@ -1,7 +1,4 @@
 name: Node.js CI
-env:
-  env: ${{ secrets.ENV }}
-  serviceAccountKey: ${{ secrets.SERVICE_ACCOUNT_KEY }}
 on:
   push:
     branches: [ main ]
