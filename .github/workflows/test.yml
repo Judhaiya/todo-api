@@ -25,9 +25,10 @@ jobs:
           SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
         run: echo  $SERVICE_ACCOUNT_KEY | base64 --decode > services/firebase/serviceAccountKey.json
       - name: create directories and sub directories before running test for temp folder
-        run: mkdir -p tmp/{uploads}
+        run: mkdir -p tmp/uploads
       - name: create sub directory before running test for tests folder
-        run: mkdir -p tests/{uploads}
+        run: mkdir -p tests/uploads
       - run: npm ci
+      - run: npm run start &
       - run: npm run build --if-present
-      - run: npm test 
+      - run: npm test
