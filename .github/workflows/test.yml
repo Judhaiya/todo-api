@@ -30,6 +30,7 @@ jobs:
         run: mkdir -p tests/uploads
       - run: ls tmp/uploads
       - run: ls tests/uploads
+      - run: npm run start
       - run: npm ci
       - run: npm run build --if-present
       - run: npx mocha tests/integration/auth.test.js --timeout 10000
