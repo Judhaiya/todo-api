@@ -33,4 +33,4 @@ jobs:
       - run: npm ci
       - run: npm run start &
       - run: npm run build --if-present
-      - run: npx mocha tests/integration/auth.test.js --timeout 10000
+      - run: npx mocha tests/integration/todos.test.js --timeout 10000
