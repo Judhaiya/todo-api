@@ -16,6 +16,14 @@ const path = require("path");
 
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
+/**
+ * @api {get} /todos/getAllTodos  Request all todos in the collection
+ * @apiName getAllTodos
+ * @apiGroup todos
+ *
+ * @apiParam no parameters required
+ *
+ */
 
 router.get("/getAllTodos", validateToken, async (req, res) => {
   try {

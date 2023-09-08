@@ -30,6 +30,10 @@
     "request": "^2.88.2",
     "supertest": "^6.3.3"
   },
+  "apidoc": {
+    "title": "apidoc",
+    "url" : "http://localhost:8080"
+  },
   "devDependencies": {
     "eslint": "^8.44.0",
     "eslint-config-standard": "^17.1.0",
