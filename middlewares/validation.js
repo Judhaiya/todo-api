@@ -83,7 +83,7 @@ function preValidateProperty(path, file, taskName) {
     return;
   }
   if (file === undefined && taskName === undefined) {
-    throw validationError("image or taskName shouldn't be empty");
+    throw validationError("image and taskName shouldn't be empty");
   }
 }
 exports.validateUserSchema = async (req, res, next) => {
