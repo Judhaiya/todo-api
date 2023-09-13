@@ -7,15 +7,24 @@ const {
   deleteDocument
 } = require("../services/firebase/firestore.queries");
 
+/**
+ *  making password comparison  to check whether user entered password and password stored in db matches 
+ * @param {string} password - password of user
+ *   @param {string} email -  user email
+  */
+
 exports.comparePassword = async function (password, email) {
   try {
+    /** read user details from database by passing user email */
     const userDetails = await read.singleByKey("users", { email });
     return bcrypt.compare(password.toString(), userDetails?.password);
   } catch (err) {
+    /** throw request error if the password is invalid */
     throw requestError("no valid password found");
   }
 };
 const comparePassword = exports.comparePassword;
+
 exports.userSignup = async (userDetail) => {
   const { email, userName, password } = userDetail;
   if (await read.singleByKey("users", { email })) {
