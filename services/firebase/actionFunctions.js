@@ -6,6 +6,13 @@ const { requestError } = require("../errors");
 
 dotenv.config();
 
+/** 
+* @param {string} fileDestination
+* @param {string} bucketDestination
+* upload File function puts local file in firebase storage bucket by taking in file destination,
+storage bucket location
+ */
+
 exports.uploadFile = async (fileDestination, bucketDestination) => {
   try {
     await bucket.upload(fileDestination, {
@@ -18,6 +25,10 @@ exports.uploadFile = async (fileDestination, bucketDestination) => {
   }
 };
 
+/**
+ * @param {string} bucketDestination 
+ * deleteFileinStorage deletes file in storage by taking in bucket destination
+ */
 exports.deleteFileInStorage = async (bucketDestination) => {
   try {
     await bucket.file(bucketDestination).delete();
@@ -27,9 +38,18 @@ exports.deleteFileInStorage = async (bucketDestination) => {
   }
 };
 
+/**
+ * @param {string} filepath 
+ * @returns {string} downloadURL
+ * getDownloadableUrl generates downloable url by taking in filepath
+ * throws error if something goes wrong while generating url
+ */
+
 exports.getDownlodableUrl = async (filepath) => {
   try {
-    const fileRef = getStorage().bucket(process.env.FIREBASE_BUCKET_LOCATION).file(filepath);
+    const fileRef = getStorage()
+      .bucket(process.env.FIREBASE_BUCKET_LOCATION)
+      .file(filepath);
     const downloadURL = await getDownloadURL(fileRef);
     return downloadURL;
   } catch (err) {
@@ -38,9 +58,19 @@ exports.getDownlodableUrl = async (filepath) => {
   }
 };
 
+/**
+ * 
+ * @param {string} bucketLocation 
+ * @param {string} downloadLocation 
+ * download files from storage bucket after passing the uploaded file location and 
+ * downloads the file in the disk location
+ */
+
 exports.downloadFileFromBucket = async (bucketLocation, downloadLocation) => {
   try {
-    const res = bucket.file(bucketLocation).download({ destination: downloadLocation });
+    const res = bucket
+      .file(bucketLocation)
+      .download({ destination: downloadLocation });
     return res;
   } catch (err) {
     console.error(err);

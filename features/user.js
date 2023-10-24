@@ -8,10 +8,10 @@ const {
 } = require("../services/firebase/firestore.queries");
 
 /**
- *  making password comparison  to check whether user entered password and password stored in db matches 
+ *  making password comparison  to check whether user entered password and password stored in db matches
  * @param {string} password - password of user
  *   @param {string} email -  user email
-  */
+ */
 
 exports.comparePassword = async function (password, email) {
   try {
@@ -24,6 +24,20 @@ exports.comparePassword = async function (password, email) {
   }
 };
 const comparePassword = exports.comparePassword;
+
+/**
+ *
+ * @param {string} email
+ * @param {string} userName
+ * @param {string} password
+ * @returns {string} accessToken
+ * userSignup function checks if already exists by comparing user entered credentials and credentials stored in
+ * database
+ * if it already exists,throws an error("User email already exists")
+ * if above check is qualified,password will be hashed
+ * after password hash,along with email,userName,password will be saved in database
+ * returns accesstoken once credentials are stored in db
+ */
 
 exports.userSignup = async (userDetail) => {
   const { email, userName, password } = userDetail;
@@ -41,6 +55,17 @@ exports.userSignup = async (userDetail) => {
   return accessToken;
 };
 
+/**
+ * 
+ * @param {string} email
+ * @param {string} password
+ * @returns {string} accessToken
+ * throws request error if user doesn't have a account already by comparing user entered credentials and credentials stored in
+ * database
+ * throw error(password doesn't match) when user entered password and password stored in database doesn't match
+ * if above check passes,it will generate access token
+ */
+
 exports.userLogin = async function (userDetails) {
   const { email, password } = userDetails;
   const existingUser = await read.singleByKey("users", { email });
@@ -54,6 +79,15 @@ exports.userLogin = async function (userDetails) {
   return accessToken;
 };
 
+/**
+ * 
+ * @param {string} email
+ * @param {string} password
+ *  throws request error("Invalid User email") if user doesn't have a account already by comparing user entered credentials and credentials stored in
+ * database
+ * throw error(password doesn't match) when user entered password and password stored in database doesn't match
+ * after passing above checks,delete user credentials from the database
+ */
 exports.deleteUserAccount = async function (req) {
   const { email, password } = req.body;
   const userDetails = await read.singleByKey("users", { email });

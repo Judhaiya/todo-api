@@ -1,3 +1,10 @@
+/**
+ * @param {string} msg
+ *  validation Error function makes an error instance
+ *  assigns custom name,code,msg to error properties of error instance
+ *  can be used while throwing validation error
+ * @returns {Object} error
+ */
 exports.validationError = (msg) => {
   const error = new Error();
   error.name = "validation error";
@@ -5,6 +12,14 @@ exports.validationError = (msg) => {
   error.msg = msg;
   return error;
 };
+
+/**
+ * @param {string} msg
+ *  request Error function makes an error instance
+ *  assigns custom name,code,msg to error properties of error instance
+ *  can be used while throwing request error
+ * @returns {Object} error
+ */
 exports.requestError = (msg) => {
   const error = new Error();
   error.name = "request error";
@@ -12,6 +27,15 @@ exports.requestError = (msg) => {
   error.msg = msg;
   return error;
 };
+
+/**
+ * @param {Object} err 
+ * @param {Object} res 
+ * error handler checks for the error type and respond accordingly
+ * for validation and request error (errors from client side) , 400 error would be thrown
+ * for server error,500 would be thrown
+ */
+
 exports.errorHandler = (err, res) => {
   const { name, msg } = err;
   switch (name) {

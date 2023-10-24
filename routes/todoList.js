@@ -5,8 +5,7 @@ const {
   getSingleTodo,
   createNewTodo,
   updateSingleTodo,
-  deleteTodo,
-  deleteAllTodoItems
+  deleteTodo
 } = require("../controllers/todoList");
 const { errorHandler } = require("../services/errors");
 const { validateUserSchema } = require("../middlewares/validation");
@@ -189,17 +188,5 @@ router.delete(
     }
   }
 );
-
-router.delete("/deleteAllTodos", validateToken, async (req, res) => {
-  try {
-    await deleteAllTodoItems();
-    res
-      .status(200)
-      .json({ msg: "all the todos have been erased successfully" });
-  } catch (err) {
-    errorHandler(err, res);
-    console.error(err, "error in deleting all todo items");
-  }
-});
 
 module.exports = router;
